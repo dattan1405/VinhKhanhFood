@@ -1,0 +1,15 @@
+[
+  {
+    "Name": "New Profile",
+    "Projects": [
+      {
+        "Path": "VinhKhanhFood.App\\VinhKhanhFood.App.csproj",
+        "Action": "Start"
+      },
+      {
+        "Path": "VinhKhanhFood.API\\VinhKhanhFood.API.csproj",
+        "Action": "Start"
+      }
+    ]
+  }
+]
