@@ -13,6 +13,7 @@ public partial class MainPage : ContentPage
     private bool _isTrackingLocation = false;
     private HashSet<int> _readLocationIds = new();
     private CancellationTokenSource? _cts;
+    private CancellationTokenSource? _speechCts;
     private Location? _lastUserLocation;
 
     public MainPage()
@@ -42,25 +43,26 @@ public partial class MainPage : ContentPage
         {
             _locations = await _apiService.GetFoodLocationsAsync();
 
-            if (_locations.Count > 0)
+            if (_locations != null && _locations.Count > 0)
             {
                 vinhKhanhMap.Pins.Clear();
-                vinhKhanhMap.MapElements.Clear(); // Xóa vòng tròn cũ
+                vinhKhanhMap.MapElements.Clear();
 
                 foreach (var loc in _locations)
                 {
                     var pinLocation = new Location(loc.Latitude, loc.Longitude);
 
-                    // ✅ 1. TẠO PIN CHO QUÁN ỐC
+                    // 1. TẠO PIN CHO QUÁN ỐC
                     var pin = new Pin
                     {
                         Label = loc.Name,
                         Address = "Nhấn để nghe giới thiệu chi tiết",
                         Location = pinLocation
                     };
+                    pin.MarkerClicked += OnMapInfoWindowClicked;
                     vinhKhanhMap.Pins.Add(pin);
 
-                    // ✅ 2. TẠO VÒNG TRÒN BÁN KÍNH 30M
+                    // 2. TẠO VÒNG TRÒN BÁN KÍNH 30M
                     var circle = new Circle
                     {
                         Center = pinLocation,
@@ -72,7 +74,7 @@ public partial class MainPage : ContentPage
                     vinhKhanhMap.MapElements.Add(circle);
                 }
 
-                // Đưa camera về POI đầu tiên
+                // Đưa camera về POI đầu tiên để dễ nhìn
                 var first = _locations[0];
                 vinhKhanhMap.MoveToRegion(MapSpan.FromCenterAndRadius(
                     new Location(first.Latitude, first.Longitude),
@@ -96,7 +98,6 @@ public partial class MainPage : ContentPage
     {
         try
         {
-            // Yêu cầu quyền truy cập GPS
             PermissionStatus status = await Permissions.RequestAsync<Permissions.LocationWhenInUse>();
             if (status != PermissionStatus.Granted)
             {
@@ -107,7 +108,6 @@ public partial class MainPage : ContentPage
             _isTrackingLocation = true;
             _cts = new CancellationTokenSource();
 
-            // Lấy vị trí mỗi 3 giây
             Device.StartTimer(TimeSpan.FromSeconds(3), () =>
             {
                 if (!_isTrackingLocation || _cts?.IsCancellationRequested == true)
@@ -123,9 +123,6 @@ public partial class MainPage : ContentPage
         }
     }
 
-    /// <summary>
-    /// Lấy vị trí hiện tại từ GPS và xử lý
-    /// </summary>
     private async Task PollLocationAsync()
     {
         try
@@ -142,9 +139,6 @@ public partial class MainPage : ContentPage
         }
     }
 
-    /// <summary>
-    /// Dừng theo dõi vị trí
-    /// </summary>
     private void StopTrackingLocation()
     {
         _isTrackingLocation = false;
@@ -152,7 +146,7 @@ public partial class MainPage : ContentPage
     }
 
     /// <summary>
-    /// Xử lý khi có vị trí mới - cập nhật bản đồ và kiểm tra vùng POI
+    /// Xử lý khi có vị trí mới (Chỉ quét quán, không tự giật bản đồ)
     /// </summary>
     private void OnLocationChanged(Location userLocation)
     {
@@ -160,19 +154,10 @@ public partial class MainPage : ContentPage
         {
             MainThread.BeginInvokeOnMainThread(() =>
             {
-                // A. CHỈ CẬP NHẬT BẢN ĐỒ NẾU DI CHUYỂN TRÊN 10 MÉT
-                // Tránh cập nhật liên tục do sai số GPS nhỏ
-                if (_lastUserLocation == null ||
-                    userLocation.CalculateDistance(_lastUserLocation, DistanceUnits.Kilometers) > 0.01)
-                {
-                    vinhKhanhMap.MoveToRegion(MapSpan.FromCenterAndRadius(
-                        new Location(userLocation.Latitude, userLocation.Longitude),
-                        Distance.FromKilometers(0.2)));
+                // Cập nhật vị trí lưu vết (Đã khóa lệnh MoveToRegion để Đạt tự do vuốt map)
+                _lastUserLocation = userLocation;
 
-                    _lastUserLocation = userLocation;
-                }
-
-                // B. TÌM QUÁN GẦN NHẤT TRONG BÁN KÍNH 30M
+                // TÌM QUÁN GẦN NHẤT TRONG BÁN KÍNH 30M
                 var nearby = _locations
                     .Where(loc => userLocation.CalculateDistance(
                         new Location(loc.Latitude, loc.Longitude),
@@ -180,10 +165,9 @@ public partial class MainPage : ContentPage
                     .Where(loc => !_readLocationIds.Contains(loc.Id)) // Chưa phát tiếng
                     .OrderBy(loc => userLocation.CalculateDistance(
                         new Location(loc.Latitude, loc.Longitude),
-                        DistanceUnits.Kilometers)) // Sắp xếp gần → xa
+                        DistanceUnits.Kilometers)) // Ưu tiên quán gần nhất
                     .ToList();
 
-                // C. CHỈ PHÁT TIẾNG QUÁN GẦN NHẤT (tránh spam)
                 var closest = nearby.FirstOrDefault();
                 if (closest != null)
                 {
@@ -204,15 +188,50 @@ public partial class MainPage : ContentPage
     }
 
     /// <summary>
+    /// Phát âm thanh khi người dùng lấy tay bấm vào một cái Pin bất kỳ
+    /// </summary>
+    /// <summary>
+    /// Phát âm thanh khi người dùng lấy tay bấm vào một cái Pin bất kỳ
+    /// </summary>
+    private async void OnMapInfoWindowClicked(object sender, PinClickedEventArgs e)
+    {
+        // Ẩn bảng tên mặc định
+        e.HideInfoWindow = true;
+
+        var clickedPin = sender as Pin;
+        if (clickedPin == null) return;
+
+        var locData = _locations.FirstOrDefault(l => l.Name == clickedPin.Label);
+
+        if (locData != null)
+        {
+            string speechText = !string.IsNullOrEmpty(locData.Description)
+                                ? locData.Description
+                                : $"Đây là quán {locData.Name}";
+
+            _speechCts?.Cancel();
+
+            _speechCts = new CancellationTokenSource();
+
+            try
+            {
+                await TextToSpeech.Default.SpeakAsync(speechText, cancelToken: _speechCts.Token);
+            }
+            catch (TaskCanceledException)
+            {
+                System.Diagnostics.Debug.WriteLine("Đã ngắt giọng đọc cũ.");
+            }
+        }
+    }
+
+    /// <summary>
     /// Phát âm thanh giới thiệu chung và reset danh sách đã đọc
     /// </summary>
     private async void OnPlayAudioClicked(object sender, EventArgs e)
     {
         try
         {
-            // Reset để người dùng có thể nghe lại từ đầu
             _readLocationIds.Clear();
-
             string introText = "Chế độ hướng dẫn viên tự động đã bật. Hãy bắt đầu đi dạo phố Vĩnh Khánh nào!";
             await TextToSpeech.Default.SpeakAsync(introText);
         }
