@@ -1,0 +1,96 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             x:Class="VinhKhanhFood.App.FoodListPage"
+             Shell.NavBarIsVisible="False"
+             BackgroundColor="#F8F9FA">
+    <ScrollView>
+        <VerticalStackLayout Spacing="25" Padding="20,40,20,20">
+
+            <HorizontalStackLayout Spacing="10" VerticalOptions="Center">
+                <Label Text="📍" FontSize="24" VerticalOptions="Center" />
+                <VerticalStackLayout VerticalOptions="Center">
+                    <Label Text="Vị trí hiện tại" FontSize="12" TextColor="Gray" />
+                    <Label Text="Phố ẩm thực Vĩnh Khánh" FontSize="18" FontAttributes="Bold" TextColor="#D32F2F" />
+                </VerticalStackLayout>
+            </HorizontalStackLayout>
+
+            <Border BackgroundColor="White" 
+                    Stroke="Transparent" 
+                    StrokeShape="RoundRectangle 15"
+                    HeightRequest="50"
+                    Shadow="{Shadow Brush=Black, Offset='0,5', Radius=10, Opacity=0.1}">
+                <HorizontalStackLayout Padding="15,0" Spacing="10" VerticalOptions="Center">
+                    <Label Text="🔍" FontSize="18" TextColor="Gray" VerticalOptions="Center" />
+                    <Label Text="Tìm quán ốc, món ngon..." TextColor="LightGray" VerticalOptions="Center" />
+                </HorizontalStackLayout>
+            </Border>
+
+            <VerticalStackLayout Spacing="15">
+                <Label Text="Khám phá món ngon" FontSize="20" FontAttributes="Bold" TextColor="#333333" />
+
+                <ScrollView Orientation="Horizontal" HorizontalScrollBarVisibility="Never">
+                    <HorizontalStackLayout Spacing="15">
+
+                        <Border BackgroundColor="#D32F2F" Stroke="Transparent" StrokeShape="RoundRectangle 20" Padding="15,10">
+                            <Label Text="🐌 Ốc Hương" TextColor="White" FontAttributes="Bold" />
+                        </Border>
+
+                        <Border BackgroundColor="White" Stroke="#EEEEEE" StrokeShape="RoundRectangle 20" Padding="15,10">
+                            <Label Text="🦪 Ốc Tỏi" TextColor="#555555" FontAttributes="Bold" />
+                        </Border>
+
+                        <Border BackgroundColor="White" Stroke="#EEEEEE" StrokeShape="RoundRectangle 20" Padding="15,10">
+                            <Label Text="🦀 Cua Ghẹ" TextColor="#555555" FontAttributes="Bold" />
+                        </Border>
+
+                    </HorizontalStackLayout>
+                </ScrollView>
+            </VerticalStackLayout>
+
+            <VerticalStackLayout Spacing="15">
+                <HorizontalStackLayout HorizontalOptions="FillAndExpand">
+                    <Label Text="Quán nổi bật" FontSize="20" FontAttributes="Bold" TextColor="#333333" HorizontalOptions="StartAndExpand" />
+                    <Label Text="Xem tất cả" FontSize="14" TextColor="#D32F2F" VerticalOptions="Center" />
+                </HorizontalStackLayout>
+
+                <Border BackgroundColor="White" 
+                        Stroke="Transparent" 
+                        StrokeShape="RoundRectangle 25"
+                        Margin="0,0,0,10"
+                        Shadow="{Shadow Brush=Black, Offset='0,5', Radius=10, Opacity=0.1}">
+                    <Grid RowDefinitions="180, Auto">
+                        <Image Grid.Row="0" Source="dotnet_bot.png" Aspect="AspectFill" />
+
+                        <Grid Grid.Row="1" Padding="20" RowDefinitions="Auto, Auto" ColumnDefinitions="*, Auto">
+                            <Label Grid.Row="0" Grid.Column="0" Text="Quán Ốc Oanh" FontSize="18" FontAttributes="Bold" TextColor="#333333" />
+                            <Label Grid.Row="1" Grid.Column="0" Text="⭐ 4.8 • Cách bạn 50m" FontSize="13" TextColor="Gray" Margin="0,5,0,0" />
+
+                            <Border Grid.RowSpan="2" Grid.Column="1" BackgroundColor="#FFF0F0" Stroke="Transparent" StrokeShape="RoundRectangle 20" WidthRequest="40" HeightRequest="40" VerticalOptions="Center">
+                                <Label Text="🔊" HorizontalOptions="Center" VerticalOptions="Center" TextColor="#D32F2F" />
+                            </Border>
+                        </Grid>
+                    </Grid>
+                </Border>
+
+                <Border BackgroundColor="White" 
+                        Stroke="Transparent" 
+                        StrokeShape="RoundRectangle 25"
+                        Shadow="{Shadow Brush=Black, Offset='0,5', Radius=10, Opacity=0.1}">
+                    <Grid RowDefinitions="180, Auto">
+                        <Image Grid.Row="0" Source="dotnet_bot.png" Aspect="AspectFill" BackgroundColor="#E0E0E0" />
+                        <Grid Grid.Row="1" Padding="20" RowDefinitions="Auto, Auto" ColumnDefinitions="*, Auto">
+                            <Label Grid.Row="0" Grid.Column="0" Text="Ốc Nhớ Sài Gòn" FontSize="18" FontAttributes="Bold" TextColor="#333333" />
+                            <Label Grid.Row="1" Grid.Column="0" Text="⭐ 4.5 • Cách bạn 120m" FontSize="13" TextColor="Gray" Margin="0,5,0,0" />
+                            <Border Grid.RowSpan="2" Grid.Column="1" BackgroundColor="#FFF0F0" Stroke="Transparent" StrokeShape="RoundRectangle 20" WidthRequest="40" HeightRequest="40" VerticalOptions="Center">
+                                <Label Text="🔊" HorizontalOptions="Center" VerticalOptions="Center" TextColor="#D32F2F" />
+                            </Border>
+                        </Grid>
+                    </Grid>
+                </Border>
+
+            </VerticalStackLayout>
+        </VerticalStackLayout>
+    </ScrollView>
+
+</ContentPage>

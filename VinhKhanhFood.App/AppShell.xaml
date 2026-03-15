@@ -4,11 +4,26 @@
     xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
     xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
     xmlns:local="clr-namespace:VinhKhanhFood.App"
-    Title="VinhKhanhFood.App">
+    Shell.FlyoutBehavior="Disabled"
+    Shell.NavBarIsVisible="False"
+    TabBarBackgroundColor="#FFFFFF"
+    TabBarTitleColor="#D32F2F"
+    TabBarUnselectedColor="#999999">
 
-    <ShellContent
-        Title="Home"
-        ContentTemplate="{DataTemplate local:MainPage}"
-        Route="MainPage" />
+    <TabBar>
+
+        <Tab Title="Bản đồ">
+            <ShellContent ContentTemplate="{DataTemplate local:MainPage}" />
+        </Tab>
+
+        <Tab Title="Danh sách">
+            <ShellContent ContentTemplate="{DataTemplate local:FoodListPage}" />
+        </Tab>
+
+        <Tab Title="Cài đặt">
+            <ShellContent ContentTemplate="{DataTemplate local:SettingsPage}" />
+        </Tab>
+
+    </TabBar>
 
 </Shell>

@@ -240,4 +240,13 @@ public partial class MainPage : ContentPage
             await DisplayAlert("Lỗi", $"Lỗi phát âm: {ex.Message}", "OK");
         }
     }
+
+    private void OnCloseBottomSheetClicked(object sender, EventArgs e)
+    {
+        // Tắt giọng đọc (nếu đang đọc dở)
+        _speechCts?.Cancel();
+
+        // Ẩn bảng thông tin
+        FoodBottomSheet.IsVisible = false;
+    }
 }

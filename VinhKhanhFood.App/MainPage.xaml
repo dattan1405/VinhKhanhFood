@@ -4,23 +4,87 @@
              xmlns:maps="http://schemas.microsoft.com/dotnet/2021/maui/maps"
              x:Class="VinhKhanhFood.App.MainPage">
 
-    <Grid RowDefinitions="*, Auto">
+    <Grid>
 
         <maps:Map Grid.Row="0"
                   x:Name="vinhKhanhMap"
                   IsShowingUser="True" />
+        <HorizontalStackLayout VerticalOptions="Start" 
+                               HorizontalOptions="End" 
+                               Margin="0,40,20,0" 
+                               Spacing="10">
 
-        <Border Grid.Row="1" 
-                Margin="10" 
-                Padding="15" 
-                BackgroundColor="#F5F5F5" 
-                StrokeShape="RoundRectangle 15">
-
-            <Button Text="🔊 NGHE THUYẾT MINH PHỐ VĨNH KHÁNH" 
+            <Button Text="🔊 Audio Guide" 
                     Clicked="OnPlayAudioClicked"
-                    BackgroundColor="#512BD4" 
-                    TextColor="White" 
-                    FontAttributes="Bold" />
+                    BackgroundColor="#D32F2F" 
+                    TextColor="White"
+                    FontAttributes="Bold"
+                    CornerRadius="20"
+                    HeightRequest="45"
+                    Shadow="{Shadow Brush=Black, Offset='0,3', Radius=5, Opacity=0.3}" />
+        </HorizontalStackLayout>
+
+        <Border x:Name="FoodBottomSheet"
+                IsVisible="False"
+                VerticalOptions="End"
+                Margin="0" 
+                Padding="0"
+                BackgroundColor="White"
+                Stroke="Transparent"
+                StrokeShape="RoundRectangle 30,30,0,0"
+                Shadow="{Shadow Brush=Black, Offset='0,-5', Radius=15, Opacity=0.2}">
+
+            <Grid RowDefinitions="Auto, Auto, Auto, Auto">
+
+                <Image x:Name="ImgFood" 
+                       Grid.Row="0"
+                       Source="dotnet_bot.png" 
+                       Aspect="AspectFill" 
+                       HeightRequest="220" />
+
+                <VerticalStackLayout Grid.Row="1" Padding="20,20,20,10" Spacing="5">
+                    <Label x:Name="LblFoodName" 
+                           Text="Tên Quán Ốc" 
+                           FontSize="24" 
+                           FontAttributes="Bold" 
+                           TextColor="#D32F2F" />
+                    <HorizontalStackLayout Spacing="8" VerticalOptions="Center">
+                        <Label Text="⭐ 4.8" TextColor="#FFB300" FontAttributes="Bold" FontSize="14" />
+                        <Label Text="•" TextColor="LightGray" />
+                        <Label Text="Phố ẩm thực Vĩnh Khánh" TextColor="Gray" FontSize="14" />
+                    </HorizontalStackLayout>
+                </VerticalStackLayout>
+
+                <Label x:Name="LblFoodDescription" 
+                       Grid.Row="2"
+                       Text="Mô tả chi tiết về quán ốc sẽ được hiển thị ở đây. Nơi có những món ốc tươi ngon nhất..." 
+                       FontSize="15" 
+                       TextColor="#555555" 
+                       LineHeight="1.4"
+                       Padding="20,0,20,15" />
+
+                <Grid Grid.Row="3" ColumnDefinitions="*, *" ColumnSpacing="15" Padding="20,10,20,30">
+
+                    <Button Grid.Column="0" 
+                            Text="Đóng" 
+                            Clicked="OnCloseBottomSheetClicked"
+                            BackgroundColor="#F0F0F0" 
+                            TextColor="#333333" 
+                            FontAttributes="Bold"
+                            CornerRadius="12"
+                            HeightRequest="50" />
+
+                    <Button Grid.Column="1" 
+                            Text="📍 Dẫn đường" 
+                            BackgroundColor="#D32F2F" 
+                            TextColor="White" 
+                            FontAttributes="Bold"
+                            CornerRadius="12"
+                            HeightRequest="50"
+                            Shadow="{Shadow Brush=#D32F2F, Offset='0,4', Radius=8, Opacity=0.4}" />
+                </Grid>
+    
+            </Grid>
         </Border>
 
     </Grid>
