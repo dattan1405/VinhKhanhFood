@@ -2,91 +2,46 @@
 <ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
              xmlns:maps="http://schemas.microsoft.com/dotnet/2021/maui/maps"
-             x:Class="VinhKhanhFood.App.MainPage">
-
+             x:Class="VinhKhanhFood.App.MainPage"
+             Shell.NavBarIsVisible="False"
+             BackgroundColor="#121212">
     <Grid>
+        <maps:Map x:Name="vinhKhanhMap" IsShowingUser="True" />
 
-        <maps:Map Grid.Row="0"
-                  x:Name="vinhKhanhMap"
-                  IsShowingUser="True" />
-        <HorizontalStackLayout VerticalOptions="Start" 
-                               HorizontalOptions="End" 
-                               Margin="0,40,20,0" 
-                               Spacing="10">
-
-            <Button Text="🔊 Audio Guide" 
+        <HorizontalStackLayout VerticalOptions="Start" HorizontalOptions="End" Margin="0,40,20,0">
+            <Button Text="🔊 Auto Guide" 
                     Clicked="OnPlayAudioClicked"
-                    BackgroundColor="#D32F2F" 
-                    TextColor="White"
-                    FontAttributes="Bold"
-                    CornerRadius="20"
-                    HeightRequest="45"
-                    Shadow="{Shadow Brush=Black, Offset='0,3', Radius=5, Opacity=0.3}" />
+                    BackgroundColor="#D32F2F" TextColor="White" FontAttributes="Bold"
+                    CornerRadius="20" HeightRequest="45"
+                    Shadow="{Shadow Brush=Black, Offset='0,4', Radius=8, Opacity=0.5}" />
         </HorizontalStackLayout>
 
         <Border x:Name="FoodBottomSheet"
                 IsVisible="False"
-                VerticalOptions="End"
-                Margin="0" 
-                Padding="0"
-                BackgroundColor="White"
-                Stroke="Transparent"
-                StrokeShape="RoundRectangle 30,30,0,0"
-                Shadow="{Shadow Brush=Black, Offset='0,-5', Radius=15, Opacity=0.2}">
+                VerticalOptions="End" Margin="0" Padding="0"
+                BackgroundColor="#1C1C1E" 
+                Stroke="Transparent" StrokeShape="RoundRectangle 30,30,0,0"
+                Shadow="{Shadow Brush=Black, Offset='0,-5', Radius=15, Opacity=0.7}">
 
             <Grid RowDefinitions="Auto, Auto, Auto, Auto">
-
-                <Image x:Name="ImgFood" 
-                       Grid.Row="0"
-                       Source="dotnet_bot.png" 
-                       Aspect="AspectFill" 
-                       HeightRequest="220" />
+                <Image x:Name="ImgFood" Grid.Row="0" Source="dotnet_bot.png" Aspect="AspectFill" HeightRequest="220" />
 
                 <VerticalStackLayout Grid.Row="1" Padding="20,20,20,10" Spacing="5">
-                    <Label x:Name="LblFoodName" 
-                           Text="Tên Quán Ốc" 
-                           FontSize="24" 
-                           FontAttributes="Bold" 
-                           TextColor="#D32F2F" />
+                    <Label x:Name="LblFoodName" Text="Tên Quán Ốc" FontSize="24" FontAttributes="Bold" TextColor="White" />
                     <HorizontalStackLayout Spacing="8" VerticalOptions="Center">
                         <Label Text="⭐ 4.8" TextColor="#FFB300" FontAttributes="Bold" FontSize="14" />
-                        <Label Text="•" TextColor="LightGray" />
-                        <Label Text="Phố ẩm thực Vĩnh Khánh" TextColor="Gray" FontSize="14" />
+                        <Label Text="•" TextColor="#888888" />
+                        <Label Text="Phố ẩm thực Vĩnh Khánh" TextColor="#AAAAAA" FontSize="14" />
                     </HorizontalStackLayout>
                 </VerticalStackLayout>
 
-                <Label x:Name="LblFoodDescription" 
-                       Grid.Row="2"
-                       Text="Mô tả chi tiết về quán ốc sẽ được hiển thị ở đây. Nơi có những món ốc tươi ngon nhất..." 
-                       FontSize="15" 
-                       TextColor="#555555" 
-                       LineHeight="1.4"
-                       Padding="20,0,20,15" />
+                <Label x:Name="LblFoodDescription" Grid.Row="2" Text="Mô tả chi tiết về quán ốc sẽ được hiển thị ở đây..." FontSize="15" TextColor="#CCCCCC" LineHeight="1.4" Padding="20,0,20,15" />
 
                 <Grid Grid.Row="3" ColumnDefinitions="*, *" ColumnSpacing="15" Padding="20,10,20,30">
-
-                    <Button Grid.Column="0" 
-                            Text="Đóng" 
-                            Clicked="OnCloseBottomSheetClicked"
-                            BackgroundColor="#F0F0F0" 
-                            TextColor="#333333" 
-                            FontAttributes="Bold"
-                            CornerRadius="12"
-                            HeightRequest="50" />
-
-                    <Button Grid.Column="1" 
-                            Text="📍 Dẫn đường" 
-                            BackgroundColor="#D32F2F" 
-                            TextColor="White" 
-                            FontAttributes="Bold"
-                            CornerRadius="12"
-                            HeightRequest="50"
-                            Shadow="{Shadow Brush=#D32F2F, Offset='0,4', Radius=8, Opacity=0.4}" />
+                    <Button Grid.Column="0" Text="Đóng" Clicked="OnCloseBottomSheetClicked" BackgroundColor="#2C2C2E" TextColor="White" FontAttributes="Bold" CornerRadius="15" HeightRequest="50" />
+                    <Button Grid.Column="1" Text="📍 Dẫn đường" BackgroundColor="#D32F2F" TextColor="White" FontAttributes="Bold" CornerRadius="15" HeightRequest="50" Shadow="{Shadow Brush=#D32F2F, Offset='0,4', Radius=8, Opacity=0.4}" />
                 </Grid>
-    
             </Grid>
         </Border>
-
     </Grid>
-
 </ContentPage>

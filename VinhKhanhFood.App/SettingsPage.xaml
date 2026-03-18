@@ -2,11 +2,85 @@
 <ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
              x:Class="VinhKhanhFood.App.SettingsPage"
-             Title="SettingsPage">
-    <VerticalStackLayout>
-        <Label 
-            Text="Welcome to .NET MAUI!"
-            VerticalOptions="Center" 
-            HorizontalOptions="Center" />
-    </VerticalStackLayout>
+             Shell.NavBarIsVisible="False"
+             BackgroundColor="#121212">
+    <ScrollView>
+        <VerticalStackLayout Spacing="25" Padding="20,40,20,30">
+
+            <HorizontalStackLayout Spacing="15" VerticalOptions="Center">
+                <Border BackgroundColor="#1C1C1E" Stroke="#D32F2F" StrokeThickness="2" StrokeShape="RoundRectangle 35" WidthRequest="70" HeightRequest="70">
+                    <Label Text="TĐ" TextColor="White" FontSize="24" FontAttributes="Bold" HorizontalOptions="Center" VerticalOptions="Center" />
+                </Border>
+                <VerticalStackLayout VerticalOptions="Center" Spacing="2">
+                    <Label Text="Chào, Tân Đạt!" FontSize="22" FontAttributes="Bold" TextColor="White" />
+                    <Label Text="Khách du lịch sành ăn" FontSize="14" TextColor="#AAAAAA" />
+                </VerticalStackLayout>
+            </HorizontalStackLayout>
+
+            <VerticalStackLayout Spacing="10">
+                <Label Text="Tùy chỉnh Trợ lý Giọng nói" FontSize="16" FontAttributes="Bold" TextColor="#888888" Margin="5,0,0,0" />
+
+                <Border BackgroundColor="#1C1C1E" Stroke="Transparent" StrokeShape="RoundRectangle 20" Padding="20">
+                    <VerticalStackLayout Spacing="20">
+
+                        <Grid ColumnDefinitions="*, Auto">
+                            <VerticalStackLayout Grid.Column="0" VerticalOptions="Center">
+                                <Label Text="Tự động phát thuyết minh" FontSize="16" FontAttributes="Bold" TextColor="White" />
+                                <Label Text="Khi đi ngang qua quán (bán kính 30m)" FontSize="12" TextColor="#AAAAAA" />
+                            </VerticalStackLayout>
+                            <Switch Grid.Column="1" IsToggled="True" OnColor="#D32F2F" VerticalOptions="Center" />
+                        </Grid>
+
+                        <BoxView HeightRequest="1" Color="#2C2C2E" />
+                        <VerticalStackLayout Spacing="10">
+                            <HorizontalStackLayout HorizontalOptions="FillAndExpand">
+                                <Label Text="Tốc độ giọng đọc" FontSize="16" FontAttributes="Bold" TextColor="White" HorizontalOptions="StartAndExpand" />
+                                <Label Text="Bình thường" FontSize="14" TextColor="#D32F2F" />
+                            </HorizontalStackLayout>
+                            <Slider MinimumTrackColor="#D32F2F" MaximumTrackColor="#2C2C2E" ThumbColor="White" Value="0.5" Maximum="1" Minimum="0" />
+                        </VerticalStackLayout>
+
+                    </VerticalStackLayout>
+                </Border>
+            </VerticalStackLayout>
+
+            <VerticalStackLayout Spacing="10">
+                <Label Text="Hệ thống" FontSize="16" FontAttributes="Bold" TextColor="#888888" Margin="5,0,0,0" />
+
+                <Border BackgroundColor="#1C1C1E" Stroke="Transparent" StrokeShape="RoundRectangle 20" Padding="20">
+                    <VerticalStackLayout Spacing="20">
+
+                        <Grid ColumnDefinitions="*, Auto">
+                            <Label Grid.Column="0" Text="📍 Quyền truy cập vị trí (GPS)" FontSize="16" TextColor="White" VerticalOptions="Center" />
+                            <Label Grid.Column="1" Text="Đã cấp" TextColor="#4CAF50" FontAttributes="Bold" VerticalOptions="Center" />
+                        </Grid>
+
+                        <BoxView HeightRequest="1" Color="#2C2C2E" />
+
+                        <Grid ColumnDefinitions="*, Auto">
+                            <Label Grid.Column="0" Text="🗑️ Xóa bộ nhớ tạm (Cache)" FontSize="16" TextColor="White" VerticalOptions="Center" />
+                            <Label Grid.Column="1" Text="12 MB" TextColor="#AAAAAA" VerticalOptions="Center" />
+                        </Grid>
+
+                    </VerticalStackLayout>
+                </Border>
+            </VerticalStackLayout>
+
+            <VerticalStackLayout Spacing="10" Margin="0,10,0,0">
+                <Border BackgroundColor="#2A1616" Stroke="#D32F2F" StrokeThickness="1" StrokeShape="RoundRectangle 20" Padding="20">
+                    <VerticalStackLayout Spacing="5" HorizontalOptions="Center">
+                        <Label Text="📱 Audio Guide Phố Vĩnh Khánh" FontSize="16" FontAttributes="Bold" TextColor="#D32F2F" HorizontalOptions="Center" />
+                        <Label Text="Phiên bản 1.0.0" FontSize="13" TextColor="#AAAAAA" HorizontalOptions="Center" />
+                        <Label Text="Phát triển bởi: Tân Đạt" FontSize="14" TextColor="White" Margin="0,10,0,0" HorizontalOptions="Center" />
+                    </VerticalStackLayout>
+                </Border>
+            </VerticalStackLayout>
+
+            <Button Text="Lưu Cài Đặt" 
+                    BackgroundColor="#D32F2F" TextColor="White" FontAttributes="Bold" FontSize="16"
+                    CornerRadius="15" HeightRequest="55" Margin="0,10,0,0"
+                    Shadow="{Shadow Brush=#D32F2F, Offset='0,4', Radius=8, Opacity=0.4}" />
+
+        </VerticalStackLayout>
+    </ScrollView>
 </ContentPage>
