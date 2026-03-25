@@ -23,6 +23,7 @@ if (app.Environment.IsDevelopment())
 app.UseHttpsRedirection();
 app.UseAuthorization();
 app.MapControllers();
+app.UseStaticFiles(); // cho phép truy cập các fiel tĩnh trong wwwroot
 
 // REDIRECT: Khi mở web sẽ vào thẳng trang giao diện
 app.MapGet("/", async (context) =>
