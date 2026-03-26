@@ -1,47 +1,35 @@
-﻿# 🛵 Vinh Khanh Foodie - Audio Guide App
+﻿import os
 
-Ứng dụng hướng dẫn du lịch ẩm thực tại phố Vĩnh Khánh (Quận 4), tích hợp bản đồ tương tác và âm thanh tự động. Dự án được phát triển bằng hệ sinh thái .NET 9
+readme_content = """# Vinh Khanh Food - Ứng dụng Khám phá Ẩm thực Quận 4
 
----
-
-## 🏗️ Kiến trúc dự án
-* **Backend:** ASP.NET Core Web API 9.0 (Entity Framework Core).
-* **Mobile App:** .NET MAUI 9.0 (Mô hình MVVM).
-* **Database:** SQL Server (Đã bao gồm Script khởi tạo Schema & Data).
+Dự án phát triển ứng dụng di động bằng **.NET MAUI** kết hợp với **ASP.NET Core Web API** và **SQL Server**. Ứng dụng giúp người dùng trải nghiệm danh sách các quán ăn đặc sắc tại phố ẩm thực Vĩnh Khánh.
 
 ---
 
-##  Cấu trúc mã nguồn
-* `/VinhKhanhFood.API`: Xử lý dữ liệu, hình ảnh và cung cấp API.
-* `/VinhKhanhFood.App`: Ứng dụng di động với giao diện XAML 
-* `/Database`: Chứa file `VinhKhanhFood_Full.sql`
+## Cấu hình Hệ thống 
+
+### 1. Database (SQL Server)
+- Mở file `VinhKhanhFood.API/appsettings.json`.
+- Thay đổi `Server=...` thành tên máy tính của bạn để API kết nối được DB.
+
+### 2. Chạy Web API
+- Chọn project **VinhKhanhFood.API**.
+- **Lưu ý:** Chuyển cấu hình chạy từ `https` sang `http` (Cổng 5020).
+- Sau khi chạy, API sẽ có địa chỉ: `http://localhost:5020`.
+
+### 3. Chạy Mobile App
+- Chọn project **VinhKhanhFood.App**.
+- App đã được cấu hình trỏ về địa chỉ `http://10.0.2.2:5020` để máy ảo Android có thể nhận diện được Server local.
 
 ---
 
-##  Hướng dẫn thiết lập
+##  Hướng dẫn chạy đồ án
 
-### 1. Khởi tạo Cơ sở dữ liệu (SQL Server)
-1. Mở **SQL Server Management Studio (SSMS)**.
-2. Tạo một Database mới tên là `VinhKhanhFood`.
-3. Mở file `Database/VinhKhanhFood_Full.sql` trong project.
-4. Nhấn **Execute (F5)** để tự động tạo bảng và đổ dữ liệu mẫu.
-
-### 2. Chạy Backend (API)
-1. Mở dự án `VinhKhanhFood.API`.
-2. Sửa `DefaultConnection` trong `appsettings.json` cho khớp với Server SQL máy bạn.
-3. Đảm bảo ảnh đã nằm trong thư mục `wwwroot/images/`.
-4. Nhấn **F5** để chạy API và lấy địa chỉ IP (Ví dụ: `192.168.1.5`).
-
-### 3. Chạy Mobile App (MAUI)
-1. Mở dự án `VinhKhanhFood.App`.
-2. **Cấu hình API:** Tìm file `Services/ApiService.cs`, sửa `BaseUrl` thành IP máy tính (Không dùng `localhost` nếu chạy Android Emulator).
-3. **Google Maps:** Nếu bản đồ không hiện (ô lưới trắng), hãy thay API Key của bạn vào `AndroidManifest.xml` hoặc yêu cầu tác giả mở khóa Key.
+Để App và API chạy cùng lúc
+1. Chuột phải vào **Solution 'VinhKhanhFood'** -> chọn **Properties**.
+2. Tại mục **Startup Project**, chọn **Multiple startup projects**.
+3. Chỉnh cột **Action** của cả `VinhKhanhFood.API` và `VinhKhanhFood.App` thành **Start**.
+4. Nhấn **F5** để khởi chạy cả hai cùng lúc.
 
 ---
 
-
-##  Lưu ý khi lỗi Build
-* Lỗi **"InitializeComponent"**: Thực hiện `Clean Solution` -> Xóa thư mục `bin/obj` -> `Rebuild`.
-* Bản đồ trống: Kiểm tra API Key và quyền truy cập Internet.
-
----
