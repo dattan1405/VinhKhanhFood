@@ -1,0 +1,68 @@
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             x:Class="VinhKhanhFood.App.ExplorePage"
+             Shell.NavBarIsVisible="False"
+             BackgroundColor="#121212">
+    <Grid RowDefinitions="Auto, Auto, Auto, *">
+
+        <HorizontalStackLayout Grid.Row="0" Padding="20,50,20,10">
+            <Label Text="Discover " FontSize="28" FontAttributes="Bold" TextColor="White" />
+            <Label Text="Vinh Khanh" FontSize="28" FontAttributes="Bold" TextColor="#D32F2F" />
+        </HorizontalStackLayout>
+
+        <Border Grid.Row="1" StrokeShape="RoundRectangle 12" BackgroundColor="#212121" StrokeThickness="0" Margin="20,5,20,15" Padding="15,5">
+            <Grid ColumnDefinitions="Auto, *">
+                <Image Source="search_icon.png" WidthRequest="20" HeightRequest="20" VerticalOptions="Center"/>
+                <Entry Grid.Column="1" Placeholder="Search places..." TextColor="White" PlaceholderColor="#888888" BackgroundColor="Transparent" Margin="10,0"/>
+            </Grid>
+        </Border>
+
+        <ScrollView Grid.Row="2" Orientation="Horizontal" HorizontalScrollBarVisibility="Never">
+            <HorizontalStackLayout Spacing="10" Padding="20,0,20,15">
+                <Border StrokeShape="RoundRectangle 20" BackgroundColor="#D32F2F" StrokeThickness="0" Padding="15,8">
+                    <Label Text="🍽 All" TextColor="White" FontAttributes="Bold" VerticalOptions="Center" />
+                </Border>
+                <Border StrokeShape="RoundRectangle 20" BackgroundColor="#212121" StrokeThickness="0" Padding="15,8">
+                    <Label Text="🦞 Seafood" TextColor="#CCCCCC" FontAttributes="Bold" VerticalOptions="Center" />
+                </Border>
+                <Border StrokeShape="RoundRectangle 20" BackgroundColor="#212121" StrokeThickness="0" Padding="15,8">
+                    <Label Text="🐌 Snails" TextColor="#CCCCCC" FontAttributes="Bold" VerticalOptions="Center" />
+                </Border>
+            </HorizontalStackLayout>
+        </ScrollView>
+
+        <CollectionView Grid.Row="3" ItemsSource="{Binding Locations}" Margin="20,0,20,0">
+            <CollectionView.ItemTemplate>
+                <DataTemplate>
+                    <Border StrokeShape="RoundRectangle 16" StrokeThickness="0" BackgroundColor="#1E1E1E" Margin="0,0,0,20">
+                        <Grid RowDefinitions="180, Auto">
+
+                            <Image Grid.Row="0" Source="{Binding ImageUrl}" Aspect="AspectFill" />
+
+                            <Border Grid.Row="0" WidthRequest="44" HeightRequest="44" StrokeShape="RoundRectangle 22" 
+                                    BackgroundColor="#D32F2F" HorizontalOptions="End" VerticalOptions="Start" 
+                                    Margin="15" StrokeThickness="0">
+                                <Label Text="▶" TextColor="White" FontSize="18" HorizontalOptions="Center" VerticalOptions="Center" Margin="4,0,0,0"/>
+                            </Border>
+
+                            <VerticalStackLayout Grid.Row="1" Padding="15" Spacing="6">
+                                <Label Text="{Binding Name}" FontSize="18" FontAttributes="Bold" TextColor="White" />
+
+                                <HorizontalStackLayout Spacing="5" VerticalOptions="Center">
+                                    <Label Text="⭐" FontSize="12" VerticalOptions="Center"/>
+                                    <Label Text="4.8" TextColor="#FFC107" FontSize="13" FontAttributes="Bold" VerticalOptions="Center"/>
+                                    <Label Text="📍" FontSize="12" Margin="10,0,0,0" VerticalOptions="Center"/>
+                                    <Label Text="150m away" TextColor="#888888" FontSize="13" VerticalOptions="Center"/>
+                                </HorizontalStackLayout>
+
+                                <Label Text="{Binding Description}" TextColor="#AAAAAA" FontSize="14" MaxLines="2" LineBreakMode="TailTruncation" Margin="0,5,0,0"/>
+                            </VerticalStackLayout>
+
+                        </Grid>
+                    </Border>
+                </DataTemplate>
+            </CollectionView.ItemTemplate>
+        </CollectionView>
+
+    </Grid>
+</ContentPage>

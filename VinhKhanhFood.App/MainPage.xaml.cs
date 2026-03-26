@@ -110,4 +110,14 @@ public partial class MainPage : ContentPage
         _viewModel.CancelSpeech();
         // FoodBottomSheet.IsVisible = false; // Mở khóa dòng này nếu dùng BottomSheet
     }
+
+    private async void OnViewDetailsClicked(object sender, EventArgs e)
+    {
+        // Khi bấm nút "Xem chi tiết"
+        if (FoodBottomSheet.BindingContext is Models.FoodLocation selectedLocation)
+        {
+            await DisplayAlert("Thông báo", $"Đang xem chi tiết: {selectedLocation.Name}", "OK");
+            // Sau này Đạt sẽ code chuyển sang trang chi tiết ở đây
+        }
+    }
 }

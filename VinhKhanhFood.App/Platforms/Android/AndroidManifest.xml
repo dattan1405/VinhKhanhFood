@@ -17,7 +17,8 @@
     <application android:allowBackup="true" 
                  android:icon="@mipmap/appicon" 
                  android:label="Vinh Khanh Food" 
-                 android:supportsRtl="true">
+                 android:supportsRtl="true"
+				 android:usesCleartextTraffic="true">
 
         <meta-data android:name="com.google.android.geo.API_KEY" 
                    android:value="AIzaSyD8rah2QSR71lg7OAH3B0U7JOOYHW9P32I" />

@@ -16,24 +16,22 @@ namespace VinhKhanhFood.API.Controllers
             _context = context;
         }
 
-        /// <summary>S
+        /// <summary>
         /// Lấy danh sách quán ăn kèm theo URL hình ảnh
         /// </summary>
         [HttpGet]
         public async Task<ActionResult<IEnumerable<FoodLocation>>> GetLocations()
         {
-            // 1. Lấy dữ liệu gốc từ SQL Server
             var locations = await _context.FoodLocations.ToListAsync();
 
-            // 2. Thuật toán xử lý Dynamic URL (Chuẩn Decoupling)
-            // Lấy địa chỉ Server hiện tại (ví dụ: https://localhost:7161 hoặc IP máy tính)
-            var baseUrl = $"{Request.Scheme}://{Request.Host}{Request.PathBase}";
+            // THAY SỐ THÀNH SỐ CỔNG HTTP (trong file launchSettings.json)
+            var baseUrl = "http://10.0.2.2:5020";
 
             foreach (var loc in locations)
             {
                 if (!string.IsNullOrEmpty(loc.ImageUrl))
                 {
-                    // Chuyển "oc_oanh.jpg" thành địa chỉ như localhost
+                    // Nó sẽ ghép thành: http://10.0.2.2:5123/images/oc_dao.jpg
                     loc.ImageUrl = $"{baseUrl}/images/{loc.ImageUrl}";
                 }
             }

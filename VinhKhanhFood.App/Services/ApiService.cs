@@ -12,8 +12,8 @@ namespace VinhKhanhFood.App.Services
     {
         private readonly HttpClient _httpClient;
 
-        // 10.0.2.2 địa chỉ để máy ảo Android nhìn thấy máy MSI
-        private const string BaseUrl = "https://10.0.2.2:7028/api/Food";
+        // 10.0.2.2 địa chỉ để máy ảo Android nhìn thấy máy
+        private const string BaseUrl = "http://10.0.2.2:5020/api/Food";
 
         public ApiService()
         {
