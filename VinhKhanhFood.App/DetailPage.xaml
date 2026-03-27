@@ -1,0 +1,72 @@
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             x:Class="VinhKhanhFood.App.DetailPage"
+             Shell.NavBarIsVisible="False"
+             BackgroundColor="#121212">
+
+    <Grid RowDefinitions="*, Auto">
+
+        <ScrollView Grid.Row="0">
+            <VerticalStackLayout>
+
+                <Grid HeightRequest="300">
+                    <Image Source="{Binding ImageUrl}" Aspect="AspectFill" />
+                    <Button Text="←" FontSize="20" FontAttributes="Bold" TextColor="White" BackgroundColor="#66000000" CornerRadius="20" WidthRequest="40" HeightRequest="40" HorizontalOptions="Start" VerticalOptions="Start" Margin="15,15,0,0" Padding="0" Clicked="OnBackButtonClicked" />
+                    <Button Text="🔗" FontSize="16" TextColor="White" BackgroundColor="#66000000" CornerRadius="20" WidthRequest="40" HeightRequest="40" HorizontalOptions="End" VerticalOptions="Start" Margin="0,15,15,0" Padding="0" />
+                </Grid>
+
+                <VerticalStackLayout Padding="20" Spacing="15">
+                    <Label Text="{Binding Name}" FontSize="26" FontAttributes="Bold" TextColor="White" />
+
+                    <HorizontalStackLayout Spacing="8">
+                        <Label Text="⭐" VerticalOptions="Center" />
+                        <Label Text="4.7" TextColor="#FFC107" FontAttributes="Bold" VerticalOptions="Center" />
+                        <Label Text="•" TextColor="#AAAAAA" VerticalOptions="Center" />
+                        <Label Text="Snails &amp; Seafood" TextColor="#AAAAAA" VerticalOptions="Center" />
+                    </HorizontalStackLayout>
+
+                    <Grid ColumnDefinitions="Auto, *" RowDefinitions="Auto, Auto, Auto" RowSpacing="15" ColumnSpacing="15" Margin="0,10,0,0">
+                        <Label Grid.Row="0" Grid.Column="0" Text="📍" TextColor="#D32F2F" FontSize="18" />
+                        <Label Grid.Row="0" Grid.Column="1" Text="123 Vĩnh Khánh, Quận 4" TextColor="#AAAAAA" VerticalOptions="Center" />
+
+                        <Label Grid.Row="1" Grid.Column="0" Text="🕒" TextColor="#D32F2F" FontSize="18" />
+                        <VerticalStackLayout Grid.Row="1" Grid.Column="1">
+                            <Label Text="Opening Hours" TextColor="#555555" FontSize="12" />
+                            <Label Text="5:00 PM - 11:30 PM" TextColor="White" FontAttributes="Bold" />
+                        </VerticalStackLayout>
+
+                        <Label Grid.Row="2" Grid.Column="0" Text="📞" TextColor="#D32F2F" FontSize="18" />
+                        <VerticalStackLayout Grid.Row="2" Grid.Column="1">
+                            <Label Text="Phone" TextColor="#555555" FontSize="12" />
+                            <Label Text="+84 90 456 7788" TextColor="White" FontAttributes="Bold" />
+                        </VerticalStackLayout>
+                    </Grid>
+
+                    <Border StrokeShape="RoundRectangle 12" BackgroundColor="#1E1E1E" StrokeThickness="0" Margin="0,15,0,0" Padding="15">
+                        <Grid ColumnDefinitions="Auto, *" RowDefinitions="Auto, Auto" ColumnSpacing="15">
+                            <Button Grid.RowSpan="2" Grid.Column="0" Text="▶" TextColor="White" BackgroundColor="#D32F2F" CornerRadius="25" WidthRequest="50" HeightRequest="50" FontSize="20" Padding="0" VerticalOptions="Center"/>
+                            <HorizontalStackLayout Grid.Row="0" Grid.Column="1" HorizontalOptions="Fill" Spacing="0">
+                                <Label Text="Listen to Introduction" TextColor="White" FontAttributes="Bold" VerticalOptions="End" HorizontalOptions="StartAndExpand" />
+                                <Label Text="2:25" TextColor="#FFC107" FontSize="12" VerticalOptions="End" />
+                            </HorizontalStackLayout>
+                            <HorizontalStackLayout Grid.Row="1" Grid.Column="1" Spacing="5" Margin="0,5,0,0">
+                                <Label Text="0:00" TextColor="#888888" FontSize="12" />
+                                <Label Text="/" TextColor="#888888" FontSize="12" />
+                                <Label Text="2:25" TextColor="#888888" FontSize="12" />
+                            </HorizontalStackLayout>
+                        </Grid>
+                    </Border>
+
+                    <Label Text="About" TextColor="White" FontSize="20" FontAttributes="Bold" Margin="0,15,0,5" />
+                    <Label Text="{Binding Description}" TextColor="#AAAAAA" LineHeight="1.5" FontSize="15" />
+                </VerticalStackLayout>
+            </VerticalStackLayout>
+        </ScrollView>
+
+        <Grid Grid.Row="1" ColumnDefinitions="*, *" ColumnSpacing="15" Padding="20" BackgroundColor="#121212">
+            <Button Grid.Column="0" Text="🧭 Get Directions" BackgroundColor="#D32F2F" TextColor="White" FontAttributes="Bold" CornerRadius="8" HeightRequest="50" Clicked="OnGetDirectionsClicked"/>
+            <Button Grid.Column="1" Text="📞 Call Store" BackgroundColor="#2C2C2C" TextColor="White" FontAttributes="Bold" CornerRadius="8" HeightRequest="50" />
+        </Grid>
+
+    </Grid>
+</ContentPage>

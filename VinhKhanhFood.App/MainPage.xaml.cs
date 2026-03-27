@@ -1,7 +1,7 @@
 ﻿using Microsoft.Maui.Maps;
 using Microsoft.Maui.Controls.Maps;
 using VinhKhanhFood.App.Models;
-using VinhKhanhFood.App.ViewModels; // Nhớ thêm dòng này
+using VinhKhanhFood.App.ViewModels;
 
 namespace VinhKhanhFood.App;
 
@@ -16,6 +16,10 @@ public partial class MainPage : ContentPage
 
         // Khởi tạo và đăng ký nhận dữ liệu từ ViewModel
         _viewModel = new MapViewModel();
+
+        // Cấp bộ não cho toàn bộ trang (Rất quan trọng để Load danh sách gợi ý nếu có)
+        BindingContext = _viewModel;
+
         _viewModel.OnLocationsLoaded += DrawMapElements;
     }
 
@@ -51,9 +55,11 @@ public partial class MainPage : ContentPage
                 var pin = new Pin
                 {
                     Label = loc.Name,
-                    Address = "Nhấn để nghe giới thiệu chi tiết",
+                    Address = "Nhấn để xem chi tiết",
                     Location = pinLocation
                 };
+
+                // Gắn sự kiện Click vào Pin
                 pin.MarkerClicked += OnMapInfoWindowClicked;
                 vinhKhanhMap.Pins.Add(pin);
 
@@ -69,7 +75,7 @@ public partial class MainPage : ContentPage
                 vinhKhanhMap.MapElements.Add(circle);
             }
 
-            // Di chuyển camera
+            // Di chuyển camera về quán đầu tiên
             if (locations.Any())
             {
                 var first = locations[0];
@@ -79,22 +85,27 @@ public partial class MainPage : ContentPage
         });
     }
 
+    // SỰ KIỆN: KHI BẤM VÀO PIN TRÊN BẢN ĐỒ
     private async void OnMapInfoWindowClicked(object sender, PinClickedEventArgs e)
     {
-        e.HideInfoWindow = false;
+        // 1. QUAN TRỌNG: Ẩn cái bảng InfoWindow mặc định xấu xí của Google đi
+        e.HideInfoWindow = true;
 
         if (sender is Pin clickedPin)
         {
-            // Lấy data từ ViewModel
+            // Lấy data từ ViewModel dựa vào Label
             var locData = _viewModel.Locations.FirstOrDefault(l => l.Name == clickedPin.Label);
             if (locData != null)
             {
-                // Nếu có BottomSheet, mở khóa code dưới đây để gán tên:
-                // LblFoodName.Text = locData.Name;
-                // LblFoodDescription.Text = locData.Description;
-                // FoodBottomSheet.IsVisible = true;
+                // 2. Ép dữ liệu vào BottomSheet để XAML tự động load Hình ảnh, Tên, Mô tả
+                FoodBottomSheet.BindingContext = locData;
 
-                // Nhờ ViewModel đọc âm thanh
+                // 3. Hiển thị BottomSheet với hiệu ứng trượt lên cực mượt (Pro UI)
+                FoodBottomSheet.IsVisible = true;
+                FoodBottomSheet.TranslationY = 300; // Giấu xuống dưới trước
+                await FoodBottomSheet.TranslateTo(0, 0, 300, Easing.SinOut); // Trượt lên
+
+                // 4. Nhờ ViewModel đọc âm thanh
                 await _viewModel.PlayPinAudioAsync(locData);
             }
         }
@@ -105,19 +116,29 @@ public partial class MainPage : ContentPage
         await _viewModel.PlayGeneralIntroAsync();
     }
 
-    private void OnCloseBottomSheetClicked(object sender, EventArgs e)
+    // SỰ KIỆN: KHI BẤM NÚT TẮT (X) TRÊN BOTTOM SHEET
+    private async void OnCloseBottomSheetClicked(object sender, EventArgs e)
     {
+        // Tắt âm thanh
         _viewModel.CancelSpeech();
-        // FoodBottomSheet.IsVisible = false; // Mở khóa dòng này nếu dùng BottomSheet
+
+        // Tạo hiệu ứng trượt xuống mượt mà trước khi ẩn
+        await FoodBottomSheet.TranslateTo(0, 300, 250, Easing.SinIn);
+        FoodBottomSheet.IsVisible = false;
     }
 
+    // SỰ KIỆN: KHI BẤM NÚT "XEM CHI TIẾT" MÀU ĐỎ
     private async void OnViewDetailsClicked(object sender, EventArgs e)
     {
-        // Khi bấm nút "Xem chi tiết"
-        if (FoodBottomSheet.BindingContext is Models.FoodLocation selectedLocation)
+        // Lấy lại dữ liệu của quán đang được chọn
+        if (FoodBottomSheet.BindingContext is FoodLocation selectedLocation)
         {
-            await DisplayAlert("Thông báo", $"Đang xem chi tiết: {selectedLocation.Name}", "OK");
-            // Sau này Đạt sẽ code chuyển sang trang chi tiết ở đây
+
+            // Tắt âm thanh nếu nó đang đọc ở trang ngoài
+            _viewModel.CancelSpeech();
+
+            // Chuyển sang Trang Chi Tiết và "cầm theo" dữ liệu của quán ốc đó
+            await Navigation.PushAsync(new DetailPage(selectedLocation));
         }
     }
 }
