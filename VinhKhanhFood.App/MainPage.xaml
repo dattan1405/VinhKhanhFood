@@ -39,14 +39,19 @@
                         <Image Source="{Binding ImageUrl}" Aspect="AspectFill"/>
                     </Border>
 
-                    <ImageButton Source="close_icon.png" 
-                                 Grid.Column="1" 
-                                 HorizontalOptions="End" 
-                                 VerticalOptions="Start" 
-                                 WidthRequest="24" 
-                                 HeightRequest="24" 
-                                 BackgroundColor="Transparent"
-                                 Clicked="OnCloseBottomSheetClicked"/>
+                    <Button Text="✕"
+                            Grid.Column="1"
+                            HorizontalOptions="End"
+                            VerticalOptions="Start"
+                            WidthRequest="32"
+                            HeightRequest="32"
+                            CornerRadius="16"
+                            Padding="0"
+                            FontSize="15"
+                            FontAttributes="Bold"
+                            TextColor="#AAAAAA"
+                            BackgroundColor="#2C2C2C"
+                            Clicked="OnCloseBottomSheetClicked"/>
 
                     <VerticalStackLayout Grid.Column="1" Padding="15,0,30,0" Spacing="5">
                         <Label Text="{Binding Name}" FontSize="18" FontAttributes="Bold" TextColor="White" />
