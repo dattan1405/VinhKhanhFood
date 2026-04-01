@@ -1,5 +1,5 @@
 ﻿using VinhKhanhFood.App.ViewModels;
-using VinhKhanhFood.App.Models; // Nhớ thêm dòng này để nó hiểu FoodLocation
+using VinhKhanhFood.App.Models;
 
 namespace VinhKhanhFood.App;
 
@@ -26,11 +26,12 @@ public partial class ExplorePage : ContentPage
         // Lấy dữ liệu của quán vừa được bấm
         if (e.CurrentSelection.FirstOrDefault() is FoodLocation selectedLocation)
         {
-            // Bỏ highlight (bỏ bôi đen) cái thẻ vừa chọn cho đẹp
+            // Điều hướng đến trang chi tiết, truyền dữ liệu của quán vừa chọn
+            await Shell.Current.Navigation.PushAsync(new DetailPage(selectedLocation));
+            // Bỏ highlight (bỏ bôi đen) cái thẻ vừa chọn
             ((CollectionView)sender).SelectedItem = null;
-
-            // Tạm thời hiện thông báo. Sau này sẽ đổi thành lệnh chuyển sang Trang Chi Tiết
-            await DisplayAlert("Khám Phá", $"Đang mở chi tiết quán: {selectedLocation.Name}", "OK");
         }
     }
+
+    
 }

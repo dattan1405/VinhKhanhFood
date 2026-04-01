@@ -31,19 +31,17 @@
             </HorizontalStackLayout>
         </ScrollView>
 
-        <CollectionView Grid.Row="3" ItemsSource="{Binding Locations}" Margin="20,0,20,0">
+        <CollectionView Grid.Row="3" 
+                        ItemsSource="{Binding Locations}" 
+                        Margin="20,0,20,0"
+                        SelectionMode="Single"
+                        SelectionChanged="OnLocationSelected">
             <CollectionView.ItemTemplate>
                 <DataTemplate>
                     <Border StrokeShape="RoundRectangle 16" StrokeThickness="0" BackgroundColor="#1E1E1E" Margin="0,0,0,20">
                         <Grid RowDefinitions="180, Auto">
 
                             <Image Grid.Row="0" Source="{Binding ImageUrl}" Aspect="AspectFill" />
-
-                            <Border Grid.Row="0" WidthRequest="44" HeightRequest="44" StrokeShape="RoundRectangle 22" 
-                                    BackgroundColor="#D32F2F" HorizontalOptions="End" VerticalOptions="Start" 
-                                    Margin="15" StrokeThickness="0">
-                                <Label Text="▶" TextColor="White" FontSize="18" HorizontalOptions="Center" VerticalOptions="Center" Margin="4,0,0,0"/>
-                            </Border>
 
                             <VerticalStackLayout Grid.Row="1" Padding="15" Spacing="6">
                                 <Label Text="{Binding Name}" FontSize="18" FontAttributes="Bold" TextColor="White" />
