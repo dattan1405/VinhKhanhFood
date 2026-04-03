@@ -88,7 +88,7 @@ public partial class MainPage : ContentPage
     // SỰ KIỆN: KHI BẤM VÀO PIN TRÊN BẢN ĐỒ
     private async void OnMapInfoWindowClicked(object sender, PinClickedEventArgs e)
     {
-        // 1. QUAN TRỌNG: Ẩn cái bảng InfoWindow mặc định xấu xí của Google đi
+        // 1. QUAN TRỌNG: Ẩn bảng InfoWindow
         e.HideInfoWindow = true;
 
         if (sender is Pin clickedPin)
@@ -106,7 +106,7 @@ public partial class MainPage : ContentPage
                 await FoodBottomSheet.TranslateTo(0, 0, 300, Easing.SinOut); // Trượt lên
 
                 // 4. Nhờ ViewModel đọc âm thanh
-                await _viewModel.PlayPinAudioAsync(locData);
+                //await _viewModel.PlayPinAudioAsync(locData);
             }
         }
     }

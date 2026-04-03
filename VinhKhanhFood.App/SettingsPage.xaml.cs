@@ -42,11 +42,15 @@ public partial class SettingsPage : ContentPage
 
             if (selectedLang.Contains("VN"))
             {
+                App.CurrentLanguage = "vn"; // Cập nhật để Model bốc Name tiếng Việt
+
                 OptVietnamese.BackgroundColor = Color.FromArgb("#33D32F2F");
                 OptEnglish.BackgroundColor = Colors.Transparent;
             }
             else
             {
+                App.CurrentLanguage = "en"; // Cập nhật để Model bốc Name_EN tiếng Anh
+
                 OptEnglish.BackgroundColor = Color.FromArgb("#33D32F2F");
                 OptVietnamese.BackgroundColor = Colors.Transparent;
             }

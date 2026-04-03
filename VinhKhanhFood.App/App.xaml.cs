@@ -2,6 +2,7 @@
 {
     public partial class App : Application
     {
+        public static string CurrentLanguage { get; set; } = "vn";
         public App()
         {
             InitializeComponent();
