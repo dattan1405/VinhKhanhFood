@@ -26,8 +26,10 @@ public partial class MainPage : ContentPage
     protected override async void OnAppearing()
     {
         base.OnAppearing();
-        // Ra lệnh cho ViewModel bắt đầu làm việc
-        await _viewModel.InitializeAsync();
+        if (_viewModel != null)
+        {
+            await _viewModel.InitializeAsync();
+        }
     }
 
     protected override void OnDisappearing()

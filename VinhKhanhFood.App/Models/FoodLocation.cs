@@ -27,5 +27,8 @@ namespace VinhKhanhFood.App.Models
         // Thuộc tính này giúp XAML bốc đúng tên theo ngôn ngữ đang chọn
         public string DisplayName => App.CurrentLanguage == "en" ? (Name_EN ?? Name) : Name;
         public string DisplayDescription => App.CurrentLanguage == "en" ? (Description_EN ?? Description) : Description;
+
+        // Thông tin quản lý (Phân quyền Vendor)
+        public int? OwnerId { get; set; }
     }
 }

@@ -8,5 +8,7 @@ namespace VinhKhanhFood.API.Data
         public AppDbContext(DbContextOptions<AppDbContext> options) : base(options) { }
 
         public DbSet<FoodLocation> FoodLocations { get; set; }
+
+        public DbSet<User> Users { get; set; }
     }
 }

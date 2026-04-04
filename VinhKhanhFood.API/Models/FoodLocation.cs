@@ -17,5 +17,8 @@
         public double Latitude { get; set; }
         public double Longitude { get; set; }
         public string? ImageUrl { get; set; }
+
+        // Thông tin quản lý (Phân quyền Vendor)
+        public int? OwnerId { get; set; }
     }
 }
