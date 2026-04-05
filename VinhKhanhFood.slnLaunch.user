@@ -3,11 +3,11 @@
     "Name": "New Profile",
     "Projects": [
       {
-        "Path": "VinhKhanhFood.App\\VinhKhanhFood.App.csproj",
+        "Path": "VinhKhanhFood.API\\VinhKhanhFood.API.csproj",
         "Action": "Start"
       },
       {
-        "Path": "VinhKhanhFood.API\\VinhKhanhFood.API.csproj",
+        "Path": "VinhKhanhFood.Admin\\VinhKhanhFood.Admin.csproj",
         "Action": "Start"
       }
     ]
