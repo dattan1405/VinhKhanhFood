@@ -15,56 +15,74 @@ namespace VinhKhanhFood.API.Controllers
             _context = context;
         }
 
-        // 1. LẤY DANH SÁCH (GET)
+        // 1. LẤY TẤT CẢ CHO ADMIN (Gọi: api/Food/all)
+        [HttpGet("all")]
+        public async Task<ActionResult<IEnumerable<FoodLocation>>> GetAllLocations()
+        {
+            return await _context.FoodLocations.ToListAsync();
+        }
+
+        // 2. LẤY DANH SÁCH CHO APP (Chỉ lấy Online - Gọi: api/Food)
         [HttpGet]
         public async Task<ActionResult<IEnumerable<FoodLocation>>> GetLocations()
         {
-            var locations = await _context.FoodLocations.ToListAsync();
-            // THAY SỐ THÀNH SỐ CỔNG HTTP (trong file launchSettings.json)
-            var baseUrl = "http://10.0.2.2:5020";
-            foreach (var loc in locations)
-            {
-                if (!string.IsNullOrEmpty(loc.ImageUrl))
-                {
-                    loc.ImageUrl = $"{baseUrl}/images/{loc.ImageUrl}";
-                }
-            }
-            return Ok(locations);
+            return await _context.FoodLocations
+                                 .Where(x => x.Status == "online")
+                                 .ToListAsync();
         }
 
-        // 2. THÊM MỚI (POST)
+        // 3. LẤY CHI TIẾT 1 QUÁN (Rất quan trọng để dịch AI - Gọi: api/Food/5)
+        [HttpGet("{id}")]
+        public async Task<ActionResult<FoodLocation>> GetFoodLocation(int id)
+        {
+            var foodLocation = await _context.FoodLocations.FindAsync(id);
+            if (foodLocation == null) return NotFound();
+            return foodLocation;
+        }
+
+        // 4. THÊM MỚI (POST)
         [HttpPost]
         public async Task<ActionResult<FoodLocation>> PostFoodLocation(FoodLocation foodLocation)
         {
             _context.FoodLocations.Add(foodLocation);
             await _context.SaveChangesAsync();
-            return CreatedAtAction(nameof(GetLocations), new { id = foodLocation.Id }, foodLocation);
+            return CreatedAtAction(nameof(GetFoodLocation), new { id = foodLocation.Id }, foodLocation);
         }
 
-        // 3. CẬP NHẬT (PUT)
+        // 5. CẬP NHẬT (PUT - Dùng để lưu bản dịch)
         [HttpPut("{id}")]
         public async Task<IActionResult> PutFoodLocation(int id, FoodLocation foodLocation)
         {
-            if (id != foodLocation.Id) return BadRequest();
-            _context.Entry(foodLocation).State = EntityState.Modified;
+            if (id != foodLocation.Id) return BadRequest("ID không khớp");
+
+            // 1. Tìm đối tượng thực sự đang nằm trong Database
+            var existingPoi = await _context.FoodLocations.FindAsync(id);
+            if (existingPoi == null) return NotFound("Không tìm thấy địa điểm");
+
+            // 2. Ép Entity Framework cập nhật tất cả giá trị từ object gửi sang vào object trong DB
+            // Cách này sẽ tự động nhận diện các cột mới Name_EN, Name_KO...
+            _context.Entry(existingPoi).CurrentValues.SetValues(foodLocation);
+
             try
             {
                 await _context.SaveChangesAsync();
+                System.Diagnostics.Debug.WriteLine($"✅ API: Đã lưu thành công POI {id} vào Database");
+                return NoContent();
             }
-            catch (DbUpdateConcurrencyException)
+            catch (Exception ex)
             {
-                if (!_context.FoodLocations.Any(e => e.Id == id)) return NotFound();
-                else throw;
+                System.Diagnostics.Debug.WriteLine($"❌ API Error: {ex.Message}");
+                return BadRequest(ex.Message);
             }
-            return NoContent();
         }
 
-        // 4. XÓA (DELETE)
+        // 6. XÓA (DELETE)
         [HttpDelete("{id}")]
         public async Task<IActionResult> DeleteFoodLocation(int id)
         {
             var foodLocation = await _context.FoodLocations.FindAsync(id);
             if (foodLocation == null) return NotFound();
+
             _context.FoodLocations.Remove(foodLocation);
             await _context.SaveChangesAsync();
             return NoContent();
