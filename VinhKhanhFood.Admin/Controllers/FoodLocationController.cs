@@ -151,5 +151,32 @@ namespace VinhKhanhFood.Admin.Controllers
 
             return text; // Nếu lỗi, trả về text gốc
         }
+
+        // Xử lý Xóa địa điểm
+        [HttpPost]
+        public async Task<IActionResult> Delete(int id)
+        {
+            var client = _httpClientFactory.CreateClient();
+            var response = await client.DeleteAsync($"http://localhost:5020/api/Food/{id}");
+
+            if (response.IsSuccessStatusCode) return Ok();
+            return BadRequest("Không thể xóa địa điểm này");
+        }
+
+        // Xử lý Đổi trạng thái (Toggle)
+        [HttpPost]
+        public async Task<IActionResult> ToggleStatus(int id, string currentStatus)
+        {
+            // Đảo ngược trạng thái
+            var nextStatus = (currentStatus.ToLower() == "online") ? "pending" : "online";
+            var client = _httpClientFactory.CreateClient();
+
+            // Gửi yêu cầu Patch sang API
+            var content = new StringContent($"\"{nextStatus}\"", Encoding.UTF8, "application/json");
+            var response = await client.PatchAsync($"http://localhost:5020/api/Food/{id}/status", content);
+
+            if (response.IsSuccessStatusCode) return Ok(new { newStatus = nextStatus });
+            return BadRequest("Lỗi khi đổi trạng thái");
+        }
     }
 }

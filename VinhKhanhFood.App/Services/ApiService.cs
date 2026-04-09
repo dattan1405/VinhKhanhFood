@@ -29,12 +29,12 @@ namespace VinhKhanhFood.App.Services
             try
             {
                 // 1. Gọi API lấy danh sách thô về
-                System.Diagnostics.Debug.WriteLine($"🔄 Gọi API: {BaseUrl}");
+                System.Diagnostics.Debug.WriteLine($" Gọi API: {BaseUrl}");
                 var response = await _httpClient.GetFromJsonAsync<List<FoodLocation>>(BaseUrl);
 
                 if (response != null)
                 {
-                    System.Diagnostics.Debug.WriteLine($"✅ API trả về {response.Count} quán");
+                    System.Diagnostics.Debug.WriteLine($" API trả về {response.Count} quán");
                     
                     // 2. Vòng lặp để nối thêm địa chỉ máy ảo Android (10.0.2.2) cho từng quán
                     foreach (var loc in response)
@@ -47,20 +47,20 @@ namespace VinhKhanhFood.App.Services
                             if (!loc.ImageUrl.StartsWith("http"))
                             {
                                 loc.ImageUrl = $"http://10.0.2.2:5020/images/{loc.ImageUrl}";
-                                System.Diagnostics.Debug.WriteLine($"   → ImageUrl sau xử lý: {loc.ImageUrl}");
+                                System.Diagnostics.Debug.WriteLine($"    ImageUrl sau xử lý: {loc.ImageUrl}");
                             }
                             else
                             {
-                                System.Diagnostics.Debug.WriteLine($"   ℹ️ ImageUrl đã có full URL rồi: {loc.ImageUrl}");
+                                System.Diagnostics.Debug.WriteLine($"    ImageUrl đã có full URL rồi: {loc.ImageUrl}");
                             }
                         }
                         else
                         {
-                            System.Diagnostics.Debug.WriteLine($"   ⚠️ ImageUrl trống");
+                            System.Diagnostics.Debug.WriteLine($"    ImageUrl trống");
                         }
                     }
 
-                    System.Diagnostics.Debug.WriteLine($"✅ Xong! Trả về {response.Count} quán");
+                    System.Diagnostics.Debug.WriteLine($" Xong! Trả về {response.Count} quán");
                 }
                 else
                 {

@@ -60,10 +60,10 @@
                                     <div class="w-20 h-20 rounded-xl overflow-hidden border-2 border-gray-200 shadow-sm bg-gray-50 flex items-center justify-center">
                                         @if (!string.IsNullOrEmpty(item.ImageUrl))
                                         {
-                                            <img src="http://localhost:5020/images/@item.ImageUrl"
+                                            <img src="/images/@item.ImageUrl"
                                                  alt="@item.Name"
                                                  class="w-full h-full object-cover"
-                                                 onerror="this.src='https://placehold.co/200x200?text=No+Image'" />
+                                                 onerror="if (this.src.indexOf('localhost:5020') == -1) { this.src='http://localhost:5020/images/@item.ImageUrl'; } else { this.src='https://placehold.co/200x200?text=No+Image'; }" />
                                         }
                                         else
                                         {
@@ -78,18 +78,20 @@
                                     </p>
                                 </td>
                                 <td class="py-5">
-                                    @if (item.Status == "online")
-                                    {
-                                        <span class="inline-flex items-center px-3 py-2 rounded-lg text-xs font-bold border bg-emerald-50 text-emerald-700 border-emerald-200">
-                                            <span class="w-2 h-2 rounded-full mr-2 bg-emerald-500"></span> Online
-                                        </span>
-                                    }
-                                    else
-                                    {
-                                        <span class="inline-flex items-center px-3 py-2 rounded-lg text-xs font-bold border bg-yellow-50 text-yellow-700 border-yellow-200">
-                                            <span class="w-2 h-2 rounded-full mr-2 bg-yellow-500"></span> Pending
-                                        </span>
-                                    }
+                                    <button onclick="toggleStatus(@item.Id, '@item.Status')" id="status-badge-@item.Id" title="Click to toggle status">
+                                        @if (item.Status?.ToLower() == "online")
+                                        {
+                                            <span class="inline-flex items-center px-3 py-2 rounded-lg text-xs font-bold border bg-emerald-50 text-emerald-700 border-emerald-200">
+                                                <span class="w-2 h-2 rounded-full mr-2 bg-emerald-500 animate-pulse"></span> Online
+                                            </span>
+                                        }
+                                        else
+                                        {
+                                            <span class="inline-flex items-center px-3 py-2 rounded-lg text-xs font-bold border bg-yellow-50 text-yellow-700 border-yellow-200">
+                                                <span class="w-2 h-2 rounded-full mr-2 bg-yellow-500"></span> Pending
+                                            </span>
+                                        }
+                                    </button>
                                 </td>
                                 <td class="py-5 text-center">
                                     <!-- ✅ Language Badge Section -->
@@ -121,13 +123,13 @@
                                         <button class="text-blue-600 hover:bg-blue-50 h-10 px-4 font-semibold rounded-xl flex items-center">
                                             <i data-lucide="pencil" class="w-4 h-4 mr-1.5"></i> Edit
                                         </button>
-                                        <button class="text-red-600 hover:bg-red-50 h-10 px-4 font-semibold rounded-xl flex items-center">
+                                        <button onclick="deletePoi(@item.Id)" class="text-red-600 hover:bg-red-50 h-10 px-4 font-semibold rounded-xl flex items-center transition-colors">
                                             <i data-lucide="trash-2" class="w-4 h-4 mr-1.5"></i> Delete
                                         </button>
-                                        <!-- ✅ Auto-Translate All Button (Simplified - No Modal) -->
+                                        <!--  Auto-Translate All Button (Simplified - No Modal) -->
                                         <button onclick="executeAutoTranslateAll(@item.Id)" 
                                                 class="h-10 px-4 font-bold rounded-xl text-white shadow-md flex items-center bg-[#F59E0B] hover:bg-amber-600 transition-all">
-                                            <i data-lucide="wand-2" class="w-4 h-4 mr-1.5"></i> Auto-Translate All
+                                            <i data-lucide="wand-2" class="w-4 h-4 mr-1.5"></i> Translate
                                         </button>
                                     </div>
                                 </td>
@@ -298,14 +300,14 @@
                 });
 
                 if (response.ok) {
-                    alert("✅ Dịch và lưu thành công tất cả ngôn ngữ!");
+                    alert(" Dịch và lưu thành công tất cả ngôn ngữ!");
                     location.reload();
                 } else {
                     const errorMsg = await response.text();
-                    alert(`❌ Lỗi khi thực hiện dịch tự động.\n${errorMsg}`);
+                    alert(` Lỗi khi thực hiện dịch tự động.\n${errorMsg}`);
                 }
             } catch (err) {
-                alert("❌ Lỗi kết nối đến server.");
+                alert(" Lỗi kết nối đến server.");
                 console.error(err);
             } finally {
                 btn.innerHTML = originalContent;
@@ -339,5 +341,37 @@
             document.querySelectorAll(".status-btn").forEach(btn => btn.classList.remove("bg-white", "shadow-sm", "text-slate-900"));
             event.target.classList.add("bg-white", "shadow-sm", "text-slate-900");
         }
+
+         //  Hàm Xóa POI
+        async function deletePoi(id) {
+            if (!confirm("Bạn có chắc chắn muốn xóa quán này không? Dữ liệu sẽ mất vĩnh viễn!")) return;
+
+            try {
+                const response = await fetch(`/FoodLocation/Delete?id=${id}`, { method: 'POST' });
+                if (response.ok) {
+                    alert(" Đã xóa thành công!");
+                    location.reload();
+                } else {
+                    alert(" Lỗi khi xóa địa điểm.");
+                }
+            } catch (err) {
+                alert(" Lỗi kết nối server.");
+            }
+        }
+
+        //  Hàm đổi trạng thái Online/Pending nhanh
+        async function toggleStatus(id, currentStatus) {
+            try {
+                const response = await fetch(`/FoodLocation/ToggleStatus?id=${id}&currentStatus=${currentStatus}`, { method: 'POST' });
+                if (response.ok) {
+                    location.reload();
+                } else {
+                    alert(" Không thể cập nhật trạng thái.");
+                }
+            } catch (err) {
+                console.error(err);
+            }
+        }
+
     </script>
 }

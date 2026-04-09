@@ -21,6 +21,17 @@ public partial class DetailPage : ContentPage
         BindingContext = _currentLocation;
     }
 
+    // Cập nhật lại chữ khi quay lại trang
+    protected override void OnAppearing()
+    {
+        base.OnAppearing();
+
+        // Buộc UI phải tính toán lại DisplayName và DisplayDescription
+        // bằng cách reset lại BindingContext
+        BindingContext = null;
+        BindingContext = _currentLocation;
+    }
+
     // ==========================================
     // CÁC NÚT ĐIỀU HƯỚNG VÀ HÀNH ĐỘNG
     // ==========================================
@@ -79,50 +90,45 @@ public partial class DetailPage : ContentPage
 
     private async Task PlayAudio()
     {
-        string textToRead = _currentLocation.Description;
+        // ✅ LẤY ĐÚNG NỘI DUNG DỊCH: Thay vì lấy .Description, hãy lấy .DisplayDescription
+        string textToRead = _currentLocation.DisplayDescription;
+
         if (string.IsNullOrWhiteSpace(textToRead))
         {
-            await DisplayAlert("Thông báo", "Quán này chưa có phần giới thiệu để nghe.", "OK");
+            await DisplayAlert("Thông báo", "Chưa có phần giới thiệu cho ngôn ngữ này.", "OK");
             return;
         }
 
-        // 1. Cập nhật giao diện sang trạng thái "Đang phát"
         _isPlaying = true;
-        BtnPlayAudio.Text = "■"; // Đổi icon thành nút Stop hình vuông
-        LblAudioStatus.Text = "Playing Introduction...";
-        AudioProgressBar.Progress = 0;
+        BtnPlayAudio.Text = "■";
+        LblAudioStatus.Text = "Reading Guide...";
 
         _cts = new CancellationTokenSource();
 
-        // 2. Kích hoạt thanh ProgressBar chạy từ từ
-        // Mẹo: Cứ 1 ký tự chữ cái tốn khoảng 70 mili-giây để đọc
-        int durationMs = textToRead.Length * 70;
-        AnimateProgressBar(durationMs, _cts.Token);
-
         try
         {
-            // 3. Tìm giọng đọc Tiếng Việt (nếu máy có cài)
             var locales = await TextToSpeech.Default.GetLocalesAsync();
-            var vnLocale = locales.FirstOrDefault(l => l.Language.Contains("vi"));
+
+            // Dựa trên App.CurrentLanguage để chọn giọng đọc tương ứng
+            var selectedLocale = locales.FirstOrDefault(l => l.Language.StartsWith(App.CurrentLanguage));
+
+            // Nếu không tìm thấy giọng (ví dụ máy ko cài tiếng Hàn), thì mặc định lấy cái đầu tiên
+            if (selectedLocale == null) selectedLocale = locales.FirstOrDefault(l => l.Language.Contains("vi"));
 
             var options = new SpeechOptions()
             {
                 Volume = 1.0f,
-                Locale = vnLocale
+                Locale = selectedLocale //  Áp dụng giọng đọc đúng quốc tịch
             };
 
-            // 4. Bắt đầu đọc (Lệnh này sẽ chạy cho đến khi đọc xong hoặc bị _cts.Cancel)
+            // Tính toán ProgressBar dựa trên độ dài văn bản thực tế
+            int durationMs = textToRead.Length * 80;
+            AnimateProgressBar(durationMs, _cts.Token);
+
             await TextToSpeech.Default.SpeakAsync(textToRead, options, cancelToken: _cts.Token);
         }
-        catch (TaskCanceledException)
-        {
-            // Bỏ qua lỗi vặt khi người dùng bấm dừng ngang
-        }
-        finally
-        {
-            // 5. Trả giao diện về bình thường khi đọc xong
-            if (_isPlaying) StopAudio();
-        }
+        catch (Exception) { /* Xử lý lỗi */ }
+        finally { if (_isPlaying) StopAudio(); }
     }
 
     private void StopAudio()

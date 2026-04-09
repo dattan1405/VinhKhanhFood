@@ -32,10 +32,10 @@
         </ScrollView>
 
         <CollectionView Grid.Row="3" 
-                        ItemsSource="{Binding Locations}" 
-                        Margin="20,0,20,0"
-                        SelectionMode="Single"
-                        SelectionChanged="OnLocationSelected">
+                ItemsSource="{Binding Locations}" 
+                Margin="20,0,20,0"
+                SelectionMode="Single"
+                SelectionChanged="OnLocationSelected">
             <CollectionView.ItemTemplate>
                 <DataTemplate>
                     <Border StrokeShape="RoundRectangle 16" StrokeThickness="0" BackgroundColor="#1E1E1E" Margin="0,0,0,20">
@@ -44,7 +44,7 @@
                             <Image Grid.Row="0" Source="{Binding ImageUrl}" Aspect="AspectFill" />
 
                             <VerticalStackLayout Grid.Row="1" Padding="15" Spacing="6">
-                                <Label Text="{Binding Name}" FontSize="18" FontAttributes="Bold" TextColor="White" />
+                                <Label Text="{Binding DisplayName}" FontSize="18" FontAttributes="Bold" TextColor="White" />
 
                                 <HorizontalStackLayout Spacing="5" VerticalOptions="Center">
                                     <Label Text="⭐" FontSize="12" VerticalOptions="Center"/>
@@ -53,7 +53,7 @@
                                     <Label Text="150m away" TextColor="#888888" FontSize="13" VerticalOptions="Center"/>
                                 </HorizontalStackLayout>
 
-                                <Label Text="{Binding Description}" TextColor="#AAAAAA" FontSize="14" MaxLines="2" LineBreakMode="TailTruncation" Margin="0,5,0,0"/>
+                                <Label Text="{Binding DisplayDescription}" TextColor="#AAAAAA" FontSize="14" MaxLines="2" LineBreakMode="TailTruncation" Margin="0,5,0,0"/>
                             </VerticalStackLayout>
 
                         </Grid>

@@ -9,17 +9,23 @@
         <maps:Map x:Name="vinhKhanhMap" IsShowingUser="True" MapType="Street" />
 
         <VerticalStackLayout VerticalOptions="Start" Padding="0,50,0,0" InputTransparent="True">
-            <Border BackgroundColor="#CC121212" StrokeShape="RoundRectangle 12" StrokeThickness="0" Margin="20,0,20,10" Padding="15,10">
-                <HorizontalStackLayout>
-                    <Label Text="Discover " FontSize="26" FontAttributes="Bold" TextColor="White" />
-                    <Label Text="Vinh Khanh" FontSize="26" FontAttributes="Bold" TextColor="#D32F2F" />
-                </HorizontalStackLayout>
-            </Border>
-
-            <Border StrokeShape="RoundRectangle 12" BackgroundColor="#E6212121" StrokeThickness="0" Margin="20,0,20,15" Padding="15,5" InputTransparent="False">
+            <Border StrokeShape="RoundRectangle 25" 
+                    BackgroundColor="#F21E1E1E" 
+                    StrokeThickness="0" 
+                    Margin="20,10" 
+                    Padding="15,2" 
+                    HeightRequest="50"
+                    InputTransparent="False"
+                    Shadow="{Shadow Brush=Black, Offset='0,5', Radius=10, Opacity=0.3}">
                 <Grid ColumnDefinitions="Auto, *">
-                    <Image Source="search_icon.png" WidthRequest="20" HeightRequest="20" VerticalOptions="Center"/>
-                    <Entry Grid.Column="1" Placeholder="Search places..." TextColor="White" PlaceholderColor="#888888" BackgroundColor="Transparent" Margin="10,0"/>
+                    <Label Text="🔍" FontSize="16" VerticalOptions="Center" Margin="5,0,10,0"/>
+                    <Entry Grid.Column="1" 
+                           Placeholder="Search street food..." 
+                           TextColor="White" 
+                           PlaceholderColor="#888888" 
+                           BackgroundColor="Transparent" 
+                           FontSize="15"
+                           VerticalOptions="Center"/>
                 </Grid>
             </Border>
         </VerticalStackLayout>
@@ -29,52 +35,28 @@
                 StrokeShape="RoundRectangle 20,20,0,0" 
                 VerticalOptions="End" 
                 IsVisible="False" 
-                StrokeThickness="0">
+                StrokeThickness="0"
+                Shadow="{Shadow Brush=Black, Offset='0,-5', Radius=15, Opacity=0.4}">
             <VerticalStackLayout Spacing="15" Padding="20">
-
                 <Border StrokeShape="RoundRectangle 3" BackgroundColor="#CCFFFFFF" WidthRequest="50" HeightRequest="6" HorizontalOptions="Center" StrokeThickness="0"/>
-
                 <Grid ColumnDefinitions="Auto, *">
                     <Border Grid.Column="0" StrokeShape="RoundRectangle 12" StrokeThickness="0" WidthRequest="100" HeightRequest="100">
                         <Image Source="{Binding ImageUrl}" Aspect="AspectFill"/>
                     </Border>
-
-                    <Button Text="✕"
-                            Grid.Column="1"
-                            HorizontalOptions="End"
-                            VerticalOptions="Start"
-                            WidthRequest="32"
-                            HeightRequest="32"
-                            CornerRadius="16"
-                            Padding="0"
-                            FontSize="15"
-                            FontAttributes="Bold"
-                            TextColor="#AAAAAA"
-                            BackgroundColor="#2C2C2C"
-                            Clicked="OnCloseBottomSheetClicked"/>
-
+                    <Button Text="✕" Grid.Column="1" HorizontalOptions="End" VerticalOptions="Start" WidthRequest="32" HeightRequest="32" CornerRadius="16" Padding="0" BackgroundColor="#2C2C2C" TextColor="#AAAAAA" Clicked="OnCloseBottomSheetClicked"/>
                     <VerticalStackLayout Grid.Column="1" Padding="15,0,30,0" Spacing="5">
-                        <Label Text="{Binding Name}" FontSize="18" FontAttributes="Bold" TextColor="White" />
+                        <Label Text="{Binding DisplayName}" FontSize="18" FontAttributes="Bold" TextColor="White" />
                         <HorizontalStackLayout Spacing="5">
                             <Label Text="⭐" FontSize="12" />
                             <Label Text="4.8" TextColor="#FFC107" FontSize="13" FontAttributes="Bold" VerticalOptions="Center"/>
                             <Label Text="•" TextColor="#AAAAAA" Margin="5,0"/>
                             <Label Text="150m away" TextColor="#AAAAAA" FontSize="13" VerticalOptions="Center"/>
                         </HorizontalStackLayout>
-                        <Label Text="{Binding Description}" TextColor="#AAAAAA" FontSize="14" MaxLines="2" LineBreakMode="TailTruncation" Margin="0,5,0,0"/>
+                        <Label Text="{Binding DisplayDescription}" TextColor="#AAAAAA" FontSize="14" MaxLines="2" LineBreakMode="TailTruncation" Margin="0,5,0,0"/>
                     </VerticalStackLayout>
                 </Grid>
-
-                <Button Text="View Details" 
-                        BackgroundColor="#D32F2F" 
-                        TextColor="White" 
-                        CornerRadius="8" 
-                        HeightRequest="50" 
-                        FontAttributes="Bold" 
-                        Margin="0,10,0,0"
-                        Clicked="OnViewDetailsClicked"/>
+                <Button Text="View Details" BackgroundColor="#D32F2F" TextColor="White" CornerRadius="8" HeightRequest="50" FontAttributes="Bold" Clicked="OnViewDetailsClicked"/>
             </VerticalStackLayout>
         </Border>
-
     </Grid>
 </ContentPage>

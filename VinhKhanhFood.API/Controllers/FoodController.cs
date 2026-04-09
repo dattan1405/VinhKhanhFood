@@ -87,5 +87,25 @@ namespace VinhKhanhFood.API.Controllers
             await _context.SaveChangesAsync();
             return NoContent();
         }
+
+        // 7. CẬP NHẬT TRẠNG THÁI (PATCH - Gọi: api/Food/5/status)
+        [HttpPatch("{id}/status")]
+        public async Task<IActionResult> UpdateStatus(int id, [FromBody] string newStatus)
+        {
+            var poi = await _context.FoodLocations.FindAsync(id);
+            if (poi == null) return NotFound("Không tìm thấy địa điểm");
+
+            poi.Status = newStatus;
+
+            try
+            {
+                await _context.SaveChangesAsync();
+                return Ok(new { message = "Cập nhật trạng thái thành công" });
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(ex.Message);
+            }
+        }
     }
 }

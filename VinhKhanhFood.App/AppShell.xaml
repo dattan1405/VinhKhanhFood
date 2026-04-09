@@ -11,15 +11,15 @@
     TabBarUnselectedColor="#999999">
 
     <TabBar>
-        <Tab Title="Bản Đồ" Icon="map_icon.png">
+        <Tab Title="Map" Icon="map_icon.png">
             <ShellContent ContentTemplate="{DataTemplate local:MainPage}" />
         </Tab>
 
-        <Tab Title="Khám Phá" Icon="explore_icon.png">
+        <Tab Title="Explore" Icon="explore_icon.png">
             <ShellContent ContentTemplate="{DataTemplate local:ExplorePage}" />
         </Tab>
 
-        <Tab Title="Cài Đặt" Icon="settings_icon.png">
+        <Tab Title="Setting" Icon="settings_icon.png">
             <ShellContent ContentTemplate="{DataTemplate local:SettingsPage}" />
         </Tab>
     </TabBar>

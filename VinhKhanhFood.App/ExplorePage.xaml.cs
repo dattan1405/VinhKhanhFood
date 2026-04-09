@@ -12,6 +12,16 @@ public partial class ExplorePage : ContentPage
         InitializeComponent();
         _viewModel = new ExploreViewModel();
         BindingContext = _viewModel;
+
+        // Khi SettingsPage "phát loa", hàm bên dưới sẽ tự động chạy
+        MessagingCenter.Subscribe<object>(this, "LanguageChanged", async (sender) =>
+        {
+            // Bắt ViewModel nạp lại dữ liệu từ API
+            // Lúc này Model sẽ tự nhận diện App.CurrentLanguage mới để đổi chữ
+            await _viewModel.LoadLocationsAsync();
+
+            System.Diagnostics.Debug.WriteLine(" ExplorePage: Đã nạp lại dữ liệu theo ngôn ngữ mới!");
+        });
     }
 
     protected override async void OnAppearing()
@@ -20,18 +30,12 @@ public partial class ExplorePage : ContentPage
         await _viewModel.LoadLocationsAsync();
     }
 
-    // Xử lý khi người dùng bấm vào một quán ốc trong danh sách
     private async void OnLocationSelected(object sender, SelectionChangedEventArgs e)
     {
-        // Lấy dữ liệu của quán vừa được bấm
         if (e.CurrentSelection.FirstOrDefault() is FoodLocation selectedLocation)
         {
-            // Điều hướng đến trang chi tiết, truyền dữ liệu của quán vừa chọn
             await Shell.Current.Navigation.PushAsync(new DetailPage(selectedLocation));
-            // Bỏ highlight (bỏ bôi đen) cái thẻ vừa chọn
             ((CollectionView)sender).SelectedItem = null;
         }
     }
-
-    
 }

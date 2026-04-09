@@ -21,6 +21,14 @@ public partial class MainPage : ContentPage
         BindingContext = _viewModel;
 
         _viewModel.OnLocationsLoaded += DrawMapElements;
+
+        MessagingCenter.Subscribe<object>(this, "LanguageChanged", (sender) =>
+        {
+            if (_viewModel.Locations != null && _viewModel.Locations.Any())
+            {
+                DrawMapElements(_viewModel.Locations);
+            }
+        });
     }
 
     protected override async void OnAppearing()

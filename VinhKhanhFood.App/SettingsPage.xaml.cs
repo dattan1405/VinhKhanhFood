@@ -5,6 +5,19 @@ public partial class SettingsPage : ContentPage
     public SettingsPage()
     {
         InitializeComponent();
+        // khi vừa mở trang Settings, nó highlight đúng ngôn ngữ đang dùng
+        UpdateLanguageUI(App.CurrentLanguage);
+
+        // Cập nhật text hiển thị ban đầu
+        LblCurrentLanguage.Text = App.CurrentLanguage switch
+        {
+            "vi" => "VN Tiếng Việt",
+            "en" => "US English",
+            "ko" => "KR Korean",
+            "ja" => "JP Japanese",
+            "zh" => "CN Chinese",
+            _ => "VN Tiếng Việt"
+        };
     }
 
     // ==========================================
@@ -36,28 +49,48 @@ public partial class SettingsPage : ContentPage
     // Khi chọn 1 ngôn ngữ trong danh sách
     private void OnLanguageSelected(object sender, TappedEventArgs e)
     {
-        if (sender is Border border && border.GestureRecognizers[0] is TapGestureRecognizer tap && tap.CommandParameter is string selectedLang)
+        // Lấy langCode trực tiếp từ CommandParameter mà Đạt đã set ở XAML
+        var langCode = e.Parameter as string;
+
+        if (!string.IsNullOrEmpty(langCode))
         {
-            LblCurrentLanguage.Text = selectedLang;
+            App.CurrentLanguage = langCode;
 
-            if (selectedLang.Contains("VN"))
+            // Cập nhật text hiển thị
+            LblCurrentLanguage.Text = langCode switch
             {
-                App.CurrentLanguage = "vn"; // Cập nhật để Model bốc Name tiếng Việt
+                "vi" => "VN Tiếng Việt",
+                "en" => "US English",
+                "ko" => "KR Korean",
+                "ja" => "JP Japanese",
+                "zh" => "CN Chinese",
+                _ => "VN Tiếng Việt"
+            };
 
-                OptVietnamese.BackgroundColor = Color.FromArgb("#33D32F2F");
-                OptEnglish.BackgroundColor = Colors.Transparent;
-            }
-            else
-            {
-                App.CurrentLanguage = "en"; // Cập nhật để Model bốc Name_EN tiếng Anh
-
-                OptEnglish.BackgroundColor = Color.FromArgb("#33D32F2F");
-                OptVietnamese.BackgroundColor = Colors.Transparent;
-            }
-
-            // Gọi hàm đóng bảng
+            UpdateLanguageUI(langCode);
+            MessagingCenter.Send<object>(this, "LanguageChanged");
             OnCloseModalTapped(this, EventArgs.Empty);
         }
+    }
+
+    // Hàm phụ để đổi màu các Border cho đẹp
+    private void UpdateLanguageUI(string langCode)
+    {
+        // Kiểm tra xem các Border đã được khởi tạo chưa trước khi đổi màu
+        if (OptVietnamese != null)
+            OptVietnamese.BackgroundColor = langCode == "vi" ? Color.FromArgb("#33D32F2F") : Colors.Transparent;
+
+        if (OptEnglish != null)
+            OptEnglish.BackgroundColor = langCode == "en" ? Color.FromArgb("#33D32F2F") : Colors.Transparent;
+
+        if (OptKorean != null)
+            OptKorean.BackgroundColor = langCode == "ko" ? Color.FromArgb("#33D32F2F") : Colors.Transparent;
+
+        if (OptJapanese != null)
+            OptJapanese.BackgroundColor = langCode == "ja" ? Color.FromArgb("#33D32F2F") : Colors.Transparent;
+
+        if (OptChinese != null)
+            OptChinese.BackgroundColor = langCode == "zh" ? Color.FromArgb("#33D32F2F") : Colors.Transparent;
     }
 
     // ==========================================
