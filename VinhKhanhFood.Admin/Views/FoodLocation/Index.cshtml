@@ -2,16 +2,14 @@
 @{
     ViewData["Title"] = "POI Management";
 }
-
 <div class="min-h-screen bg-[#F8FAFC]" style="font-family: 'Inter', 'Manrope', sans-serif;">
     <div class="max-w-[1600px] mx-auto px-8 py-8">
-
         <div class="mb-8 flex items-center justify-between">
             <div>
                 <h1 class="text-4xl font-bold text-slate-900 mb-2">Quản lý địa điểm (POI)</h1>
                 <p class="text-sm text-gray-600 font-medium">Manage all food locations in Vinh Khanh Food Street</p>
             </div>
-            <button onclick="openModal()" class="h-12 px-6 font-bold text-white rounded-xl shadow-lg hover:shadow-xl transition-all flex items-center"
+            <button onclick="openAddModal()" class="h-12 px-6 font-bold text-white rounded-xl shadow-lg hover:shadow-xl transition-all flex items-center"
                     style="background-color: #064E3B">
                 <i data-lucide="plus" class="w-5 h-5 mr-2" stroke-width="2.5"></i>
                 Add New POI
@@ -25,7 +23,6 @@
                     <input type="text" id="poiSearch" onkeyup="filterTable()" placeholder="Search by restaurant name or description..."
                            class="w-full pl-12 h-12 bg-gray-50 border border-gray-200 rounded-xl font-medium focus:outline-none focus:ring-2 focus:ring-emerald-500" />
                 </div>
-
                 <div class="flex items-center gap-2">
                     <i data-lucide="filter" class="w-5 h-5 text-gray-500"></i>
                     <div class="flex bg-gray-50 rounded-xl p-1 border border-gray-200">
@@ -58,12 +55,19 @@
                                 <td class="font-bold text-slate-900 pl-6 py-5">#@item.Id.ToString("D3")</td>
                                 <td class="py-5">
                                     <div class="w-20 h-20 rounded-xl overflow-hidden border-2 border-gray-200 shadow-sm bg-gray-50 flex items-center justify-center">
-                                        @if (!string.IsNullOrEmpty(item.ImageUrl))
+                                        @{
+                                            var imgSrc = !string.IsNullOrEmpty(item.ImageUrl)
+                                                ? (item.ImageUrl.StartsWith("http", StringComparison.OrdinalIgnoreCase)
+                                                    ? item.ImageUrl
+                                                    : $"http://localhost:5020/images/{item.ImageUrl}")
+                                                : null;
+                                        }
+                                        @if (!string.IsNullOrEmpty(imgSrc))
                                         {
-                                            <img src="/images/@item.ImageUrl"
+                                            <img src="@imgSrc"
                                                  alt="@item.Name"
                                                  class="w-full h-full object-cover"
-                                                 onerror="if (this.src.indexOf('localhost:5020') == -1) { this.src='http://localhost:5020/images/@item.ImageUrl'; } else { this.src='https://placehold.co/200x200?text=No+Image'; }" />
+                                                 onerror="this.onerror=null; this.src='https://placehold.co/200x200?text=No+Image';" />
                                         }
                                         else
                                         {
@@ -94,25 +98,29 @@
                                     </button>
                                 </td>
                                 <td class="py-5 text-center">
-                                    <!-- ✅ Language Badge Section -->
                                     <div class="flex flex-wrap justify-center gap-1">
-                                        @if (!string.IsNullOrEmpty(item.Name_EN))
+                                        @if (!string.IsNullOrEmpty(item.Name_EN) && !string.IsNullOrEmpty(item.Description_EN))
                                         {
                                             <span class="px-2 py-1 bg-blue-100 text-blue-700 rounded text-[10px] font-bold">EN</span>
                                         }
-                                        @if (!string.IsNullOrEmpty(item.Name_KO))
+                                        @if (!string.IsNullOrEmpty(item.Name_KO) && !string.IsNullOrEmpty(item.Description_KO))
                                         {
                                             <span class="px-2 py-1 bg-red-100 text-red-700 rounded text-[10px] font-bold">KO</span>
                                         }
-                                        @if (!string.IsNullOrEmpty(item.Name_JA))
+                                        @if (!string.IsNullOrEmpty(item.Name_JA) && !string.IsNullOrEmpty(item.Description_JA))
                                         {
                                             <span class="px-2 py-1 bg-orange-100 text-orange-700 rounded text-[10px] font-bold">JA</span>
                                         }
-                                        @if (!string.IsNullOrEmpty(item.Name_ZH))
+                                        @if (!string.IsNullOrEmpty(item.Name_ZH) && !string.IsNullOrEmpty(item.Description_ZH))
                                         {
                                             <span class="px-2 py-1 bg-purple-100 text-purple-700 rounded text-[10px] font-bold">ZH</span>
                                         }
-                                        @if (string.IsNullOrEmpty(item.Name_EN) && string.IsNullOrEmpty(item.Name_KO) && string.IsNullOrEmpty(item.Name_JA) && string.IsNullOrEmpty(item.Name_ZH))
+                                        @if (
+                                            string.IsNullOrEmpty(item.Name_EN) || string.IsNullOrEmpty(item.Description_EN) &&
+                                            string.IsNullOrEmpty(item.Name_KO) || string.IsNullOrEmpty(item.Description_KO) &&
+                                            string.IsNullOrEmpty(item.Name_JA) || string.IsNullOrEmpty(item.Description_JA) &&
+                                            string.IsNullOrEmpty(item.Name_ZH) || string.IsNullOrEmpty(item.Description_ZH)
+                                        )
                                         {
                                             <span class="text-gray-400 text-xs">Not Yet</span>
                                         }
@@ -120,14 +128,31 @@
                                 </td>
                                 <td class="pr-6 py-5 text-right">
                                     <div class="flex items-center justify-end gap-2">
-                                        <button class="text-blue-600 hover:bg-blue-50 h-10 px-4 font-semibold rounded-xl flex items-center">
+                                        <button type="button"
+                                                data-id="@item.Id"
+                                                data-name="@item.Name"
+                                                data-desc="@item.Description"
+                                                data-status="@item.Status"
+                                                data-lat="@item.Latitude"
+                                                data-lng="@item.Longitude"
+                                                data-image="@item.ImageUrl"
+                                                data-en="@item.Name_EN"
+                                                data-ko="@item.Name_KO"
+                                                data-ja="@item.Name_JA"
+                                                data-zh="@item.Name_ZH"
+                                                data-desc-en="@item.Description_EN"
+                                                data-desc-ko="@item.Description_KO"
+                                                data-desc-ja="@item.Description_JA"
+                                                data-desc-zh="@item.Description_ZH"
+                                                onclick="openEditModal(this)"
+                                                class="text-blue-600 hover:bg-blue-50 h-10 px-4 font-semibold rounded-xl flex items-center">
                                             <i data-lucide="pencil" class="w-4 h-4 mr-1.5"></i> Edit
                                         </button>
+
                                         <button onclick="deletePoi(@item.Id)" class="text-red-600 hover:bg-red-50 h-10 px-4 font-semibold rounded-xl flex items-center transition-colors">
                                             <i data-lucide="trash-2" class="w-4 h-4 mr-1.5"></i> Delete
                                         </button>
-                                        <!--  Auto-Translate All Button (Simplified - No Modal) -->
-                                        <button onclick="executeAutoTranslateAll(@item.Id)" 
+                                        <button onclick="executeAutoTranslateAll(@item.Id)"
                                                 class="h-10 px-4 font-bold rounded-xl text-white shadow-md flex items-center bg-[#F59E0B] hover:bg-amber-600 transition-all">
                                             <i data-lucide="wand-2" class="w-4 h-4 mr-1.5"></i> Translate
                                         </button>
@@ -144,7 +169,6 @@
 
 <div id="addPoiModal" class="hidden fixed inset-0 z-50 flex items-center justify-center p-4">
     <div class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm" onclick="closeModal()"></div>
-
     <div class="bg-white rounded-3xl shadow-2xl max-w-3xl w-full max-h-[90vh] overflow-y-auto relative z-10">
         <div class="p-8 pb-6 border-b border-gray-100 flex items-start justify-between">
             <div class="flex items-start gap-4">
@@ -152,39 +176,49 @@
                     <i data-lucide="store" class="w-7 h-7 text-[#F59E0B]"></i>
                 </div>
                 <div>
-                    <h2 class="text-2xl font-extrabold text-slate-900">Add New Food Location</h2>
+                    <h2 id="modalTitle" class="text-2xl font-extrabold text-slate-900">Add New Food Location</h2>
                     <p class="text-sm text-gray-500">Enter details from Figma design</p>
                 </div>
             </div>
             <button onclick="closeModal()" class="text-[#F59E0B]"><i data-lucide="x"></i></button>
         </div>
 
-        <form asp-action="Create" asp-controller="FoodLocation" method="post" enctype="multipart/form-data">
+        <form id="poiForm" action="/FoodLocation/Create" method="post" enctype="multipart/form-data">
+            <input type="hidden" name="Id" id="poiId" value="0" />
+
+            <input type="hidden" name="ImageUrl" id="hiddenImageUrl" value="" />
+            <input type="hidden" name="Name_EN" id="hiddenNameEN" value="" />
+            <input type="hidden" name="Name_KO" id="hiddenNameKO" value="" />
+            <input type="hidden" name="Name_JA" id="hiddenNameJA" value="" />
+            <input type="hidden" name="Name_ZH" id="hiddenNameZH" value="" />
+            <input type="hidden" name="Description_EN" id="hiddenDescEN" value="" />
+            <input type="hidden" name="Description_KO" id="hiddenDescKO" value="" />
+            <input type="hidden" name="Description_JA" id="hiddenDescJA" value="" />
+            <input type="hidden" name="Description_ZH" id="hiddenDescZH" value="" />
+
             <div class="p-8 space-y-6">
                 <div>
                     <label class="text-xs font-bold text-gray-400 uppercase tracking-widest mb-2 block">Restaurant Name</label>
                     <input name="Name" type="text" class="w-full bg-slate-50 border-slate-100 rounded-xl h-14 px-4 font-semibold" required />
                 </div>
-
                 <div class="grid grid-cols-2 gap-6">
                     <div>
                         <label class="text-xs font-bold text-gray-400 uppercase tracking-widest mb-2 block">Description</label>
                         <textarea name="Description" class="w-full bg-slate-50 border-slate-100 rounded-xl p-4 min-h-[150px]" required></textarea>
                     </div>
-
                     <div>
                         <label class="text-xs font-bold text-gray-400 uppercase tracking-widest mb-2 block">Thumbnail</label>
-                        <div onclick="document.getElementById('fileInput').click()" class="border-2 border-dashed border-gray-200 rounded-2xl bg-gray-50 p-6 text-center cursor-pointer hover:border-amber-400 relative overflow-hidden h-[150px] flex flex-col justify-center">
+                        <div onclick="document.getElementById('fileInput').click()"
+                             class="border-2 border-dashed border-gray-200 rounded-2xl bg-gray-50 p-6 text-center cursor-pointer hover:border-amber-400 relative overflow-hidden h-[150px] flex flex-col justify-center">
                             <div id="upload-prompt">
                                 <i data-lucide="upload-cloud" class="mx-auto mb-2 text-amber-500"></i>
                                 <p class="text-xs font-bold">Click to upload</p>
                             </div>
-                            <img id="preview-img" class="hidden absolute inset-0 w-full h-full object-cover" /> 
+                            <img id="preview-img" class="hidden absolute inset-0 w-full h-full object-cover" />
                             <input type="file" name="ImageFile" id="fileInput" class="hidden" accept="image/*" onchange="previewImage(this)" />
                         </div>
                     </div>
                 </div>
-
                 <div>
                     <label class="text-xs font-bold text-gray-400 uppercase tracking-widest mb-2 block">Status</label>
                     <select name="Status" class="w-full bg-slate-50 border-slate-100 rounded-xl h-14 px-4 font-bold">
@@ -194,66 +228,107 @@
                 </div>
 
                 <div>
-                    <label class="text-xs font-bold text-gray-400 uppercase tracking-widest mb-2 block">Set Location on Map (Click to pick)</label>
-                    <div id="map" class="w-full h-48 rounded-2xl bg-gray-100 border border-slate-200"></div>
+                    <label class="text-xs font-bold text-gray-400 uppercase tracking-widest mb-3 block">Set Location on Map (Click hoặc tìm kiếm)</label>
+                    <div class="grid grid-cols-2 gap-4 mb-4">
+                        <div>
+                            <label class="text-xs font-bold text-gray-400 uppercase tracking-widest mb-2 block">Latitude (Vĩ độ)</label>
+                            <input name="Latitude" id="latInput" type="text"
+                                   class="w-full bg-white border border-slate-200 rounded-xl h-12 px-4 font-mono text-slate-900 focus:ring-2 focus:ring-emerald-500"
+                                   placeholder="10.7626200" required />
+                        </div>
+                        <div>
+                            <label class="text-xs font-bold text-gray-400 uppercase tracking-widest mb-2 block">Longitude (Kinh độ)</label>
+                            <input name="Longitude" id="lngInput" type="text"
+                                   class="w-full bg-white border border-slate-200 rounded-xl h-12 px-4 font-mono text-slate-900 focus:ring-2 focus:ring-emerald-500"
+                                   placeholder="106.7032000" required />
+                        </div>
+                    </div>
+                    <div id="map" style="height: 420px; width: 100%; border-radius: 16px; border: 1px solid #e2e8f0; background: #f8fafc;"></div>
                 </div>
-
-                <input type="hidden" name="Latitude" id="latInput" />
-                <input type="hidden" name="Longitude" id="lngInput" />
             </div>
 
             <div class="p-6 border-t border-gray-100 flex justify-end gap-3">
                 <button type="button" onclick="closeModal()" class="font-bold text-gray-500">Cancel</button>
-                <button type="submit" class="bg-[#064E3B] text-white px-8 py-3 rounded-xl font-bold">Add POI</button>
+                <button type="submit" id="submitBtn" class="bg-[#064E3B] text-white px-8 py-3 rounded-xl font-bold">Add POI</button>
             </div>
         </form>
     </div>
 </div>
 
 @section Scripts {
-    <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyD8rah2QSR71lg7OAH3B0U7JOOYHW9P32I"></script>
-    
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet-control-geocoder/dist/Control.Geocoder.css" />
+    <script src="https://unpkg.com/leaflet-control-geocoder/dist/Control.Geocoder.js"></script>
+
     <script>
         let map;
         let marker;
-        let mapInitialized = false;
 
         function initMap() {
-            if (mapInitialized) return;
+            if (map) return;
+            map = L.map('map').setView([10.76262, 106.7032], 17);
+            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                attribution: '© OpenStreetMap contributors'
+            }).addTo(map);
+            L.Control.geocoder({
+                defaultMarkGeocode: true,
+                position: 'topright'
+            }).addTo(map);
 
-            const mapElement = document.getElementById("map");
-            if (!mapElement) {
-                console.warn("Map container not found");
-                return;
-            }
-
-            const vinhKhanh = { lat: 10.76262, lng: 106.7032 };
-
-            map = new google.maps.Map(mapElement, {
-                zoom: 17,
-                center: vinhKhanh,
-                mapTypeControl: false,
-                streetViewControl: false
-            });
-
-            mapInitialized = true;
-
-            map.addListener("click", (mapsMouseEvent) => {
-                const position = mapsMouseEvent.latLng;
-
+            map.on('click', function(e) {
+                const lat = e.latlng.lat;
+                const lng = e.latlng.lng;
                 if (marker) {
-                    marker.setPosition(position);
+                    marker.setLatLng(e.latlng);
                 } else {
-                    marker = new google.maps.Marker({
-                        position: position,
-                        map: map,
-                        animation: google.maps.Animation.DROP
+                    marker = L.marker(e.latlng, { draggable: true }).addTo(map);
+                    marker.on('dragend', function() {
+                        const pos = marker.getLatLng();
+                        updateInputs(pos.lat, pos.lng);
                     });
                 }
-
-                document.getElementById('latInput').value = position.lat();
-                document.getElementById('lngInput').value = position.lng();
+                updateInputs(lat, lng);
             });
+
+            const handleManualInput = () => {
+                const latRaw = document.getElementById('latInput').value.replace(',', '.');
+                const lngRaw = document.getElementById('lngInput').value.replace(',', '.');
+                const lat = parseFloat(latRaw);
+                const lng = parseFloat(lngRaw);
+
+                if (!isNaN(lat) && !isNaN(lng)) {
+                    const newPos = [lat, lng];
+                    if (marker) {
+                        marker.setLatLng(newPos);
+                    } else {
+                        marker = L.marker(newPos, { draggable: true }).addTo(map);
+                        marker.on('dragend', function() {
+                            const pos = marker.getLatLng();
+                            updateInputs(pos.lat, pos.lng);
+                        });
+                    }
+                    map.setView(newPos, 17);
+                }
+            };
+
+            // ✅ REMOVE OLD LISTENERS nếu có tồn tại
+            const latInput = document.getElementById('latInput');
+            const lngInput = document.getElementById('lngInput');
+            
+            if (latInput) {
+                latInput.removeEventListener('change', handleManualInput);
+                latInput.addEventListener('change', handleManualInput);
+            }
+            if (lngInput) {
+                lngInput.removeEventListener('change', handleManualInput);
+                lngInput.addEventListener('change', handleManualInput);
+            }
+        }
+
+        function updateInputs(lat, lng) {
+            document.getElementById('latInput').value = (lat !== '' && lat !== null && !isNaN(lat)) ? parseFloat(lat).toFixed(7) : '';
+            document.getElementById('lngInput').value = (lng !== '' && lng !== null && !isNaN(lng)) ? parseFloat(lng).toFixed(7) : '';
         }
 
         function previewImage(input) {
@@ -268,37 +343,132 @@
             }
         }
 
-        function openModal() {
+        function openAddModal() {
+            document.getElementById('poiForm').action = '/FoodLocation/Create';
+            document.getElementById('poiId').value = 0;
+            document.getElementById('poiForm').reset();
+            document.getElementById('submitBtn').innerText = 'Add POI';
+            document.getElementById('modalTitle').innerText = 'Add New Food Location';
+
+            document.getElementById('hiddenImageUrl').value = '';
+            document.getElementById('hiddenNameEN').value = '';
+            document.getElementById('hiddenNameKO').value = '';
+            document.getElementById('hiddenNameJA').value = '';
+            document.getElementById('hiddenNameZH').value = '';
+            document.getElementById('hiddenDescEN').value = '';
+            document.getElementById('hiddenDescKO').value = '';
+            document.getElementById('hiddenDescJA').value = '';
+            document.getElementById('hiddenDescZH').value = '';
+
+            document.getElementById('fileInput').value = '';
+            document.getElementById('preview-img').src = '';
+            document.getElementById('preview-img').classList.add('hidden');
+            document.getElementById('upload-prompt').classList.remove('hidden');
+
             document.getElementById('addPoiModal').classList.remove('hidden');
+
+            setTimeout(() => {
+                if (!map) initMap();
+                else map.invalidateSize();
+
+                const defaultPos = [10.76262, 106.7032];
+                map.setView(defaultPos, 17);
+                if (marker) {
+                    map.removeLayer(marker);
+                    marker = null;
+                }
+                updateInputs('', '');
+            }, 300);
+        }
+
+        function openEditModal(btn) {
+            document.getElementById('poiForm').action = '/FoodLocation/Edit';
+            document.getElementById('submitBtn').innerText = 'Save Changes';
+            document.getElementById('modalTitle').innerText = 'Edit Food Location';
+
+            const id = btn.getAttribute('data-id');
+            const name = btn.getAttribute('data-name');
+            const desc = btn.getAttribute('data-desc');
+            const status = btn.getAttribute('data-status');
+            const image = btn.getAttribute('data-image');
+
+            // ✅ SỬ LÝ AN TOÀN CHO DATA-LAT / DATA-LNG
+            let latStr = btn.getAttribute('data-lat');
+            let lngStr = btn.getAttribute('data-lng');
+
+            latStr = latStr ? latStr.replace(',', '.') : '';
+            lngStr = lngStr ? lngStr.replace(',', '.') : '';
+
+            const lat = parseFloat(latStr);
+            const lng = parseFloat(lngStr);
+
+            document.getElementById('poiId').value = id;
+            document.querySelector('input[name="Name"]').value = name || '';
+            document.querySelector('textarea[name="Description"]').value = desc || '';
+            document.querySelector('select[name="Status"]').value = (status || 'pending').toLowerCase();
             
-            if (!mapInitialized) {
-                setTimeout(function() {
-                    initMap();
-                }, 100);
-            } else if (map) {
-                google.maps.event.trigger(map, "resize");
-                map.setCenter({ lat: 10.76262, lng: 106.7032 });
+            document.getElementById('latInput').value = isNaN(lat) ? '' : latStr;
+            document.getElementById('lngInput').value = isNaN(lng) ? '' : lngStr;
+
+            document.getElementById('hiddenImageUrl').value = image || '';
+            document.getElementById('hiddenNameEN').value = btn.getAttribute('data-en') || '';
+            document.getElementById('hiddenNameKO').value = btn.getAttribute('data-ko') || '';
+            document.getElementById('hiddenNameJA').value = btn.getAttribute('data-ja') || '';
+            document.getElementById('hiddenNameZH').value = btn.getAttribute('data-zh') || '';
+
+            document.getElementById('fileInput').value = '';
+
+            if (image && image.trim() !== '') {
+                const imgSrc = image.startsWith('http') ? image : ('http://localhost:5020/images/' + image);
+                document.getElementById('preview-img').src = imgSrc;
+                document.getElementById('preview-img').classList.remove('hidden');
+                document.getElementById('upload-prompt').classList.add('hidden');
+            } else {
+                document.getElementById('preview-img').src = '';
+                document.getElementById('preview-img').classList.add('hidden');
+                document.getElementById('upload-prompt').classList.remove('hidden');
             }
+
+            document.getElementById('addPoiModal').classList.remove('hidden');
+
+            setTimeout(() => {
+                if (!map) initMap();
+                else map.invalidateSize();
+
+                if (!isNaN(lat) && !isNaN(lng)) {
+                    const pos = [lat, lng];
+                    map.setView(pos, 17);
+                    if (marker) map.removeLayer(marker);
+                    marker = L.marker(pos, { draggable: true }).addTo(map);
+                    marker.on('dragend', () => {
+                        const p = marker.getLatLng();
+                        updateInputs(p.lat, p.lng);
+                    });
+                    updateInputs(lat, lng);
+                } else {
+                    if (marker) {
+                        map.removeLayer(marker);
+                        marker = null;
+                    }
+                    map.setView([10.76262, 106.7032], 17);
+                }
+            }, 300);
         }
 
-        function closeModal() { 
-            document.getElementById('addPoiModal').classList.add('hidden'); 
+        function closeModal() {
+            document.getElementById('addPoiModal').classList.add('hidden');
         }
 
-        // ✅ AUTO-TRANSLATE ALL (Simplified - No Language Selection Modal)
+        // ==================== Utilities ====================
+
         async function executeAutoTranslateAll(id) {
             if (!confirm("Hệ thống sẽ tự động dịch sang tất cả ngôn ngữ đã cấu hình trong Database. Tiếp tục?")) return;
-
             const btn = event.currentTarget;
             const originalContent = btn.innerHTML;
             btn.innerHTML = '<i data-lucide="loader" class="w-4 h-4 mr-1.5 animate-spin"></i> Processing...';
             btn.disabled = true;
-
             try {
-                const response = await fetch(`/FoodLocation/Translate?id=${id}`, { 
-                    method: 'POST'
-                });
-
+                const response = await fetch(`/FoodLocation/Translate?id=${id}`, { method: 'POST' });
                 if (response.ok) {
                     alert(" Dịch và lưu thành công tất cả ngôn ngữ!");
                     location.reload();
@@ -319,7 +489,6 @@
             let input = document.getElementById("poiSearch");
             let filter = input.value.toLowerCase();
             let rows = document.querySelectorAll(".poi-row");
-
             rows.forEach(row => {
                 let name = row.querySelector(".poi-name").innerText.toLowerCase();
                 row.style.display = name.includes(filter) ? "" : "none";
@@ -328,7 +497,6 @@
 
         function filterStatus(status) {
             let rows = document.querySelectorAll(".poi-row");
-            
             rows.forEach(row => {
                 if (status === 'all') {
                     row.style.display = "";
@@ -337,15 +505,12 @@
                     row.style.display = rowStatus === status ? "" : "none";
                 }
             });
-            
             document.querySelectorAll(".status-btn").forEach(btn => btn.classList.remove("bg-white", "shadow-sm", "text-slate-900"));
             event.target.classList.add("bg-white", "shadow-sm", "text-slate-900");
         }
 
-         //  Hàm Xóa POI
         async function deletePoi(id) {
             if (!confirm("Bạn có chắc chắn muốn xóa quán này không? Dữ liệu sẽ mất vĩnh viễn!")) return;
-
             try {
                 const response = await fetch(`/FoodLocation/Delete?id=${id}`, { method: 'POST' });
                 if (response.ok) {
@@ -359,19 +524,73 @@
             }
         }
 
-        //  Hàm đổi trạng thái Online/Pending nhanh
         async function toggleStatus(id, currentStatus) {
             try {
+                // Fix case null status
+                if(!currentStatus) currentStatus = 'pending';
+                
                 const response = await fetch(`/FoodLocation/ToggleStatus?id=${id}&currentStatus=${currentStatus}`, { method: 'POST' });
-                if (response.ok) {
+                
+                let result;
+                const contentType = response.headers.get('content-type');
+                if (contentType && contentType.includes('application/json')) {
+                    result = await response.json();
+                } else {
+                    alert('❌ Máy chủ trả về dữ liệu không hợp lệ!');
+                    return;
+                }
+
+                if (response.ok && result.success) {
                     location.reload();
                 } else {
-                    alert(" Không thể cập nhật trạng thái.");
+                    alert("❌ Không thể cập nhật trạng thái!\n" + (result.message || ''));
                 }
             } catch (err) {
                 console.error(err);
+                alert("❌ Lỗi kết nối!");
             }
         }
 
+        // ✅ FIX: Submit form with AJAX
+        document.getElementById('poiForm')?.addEventListener('submit', async function(e) {
+            e.preventDefault();
+
+            const formData = new FormData(this);
+            const id = document.getElementById('poiId').value;
+            const submitBtn = document.getElementById('submitBtn');
+            const originalBtnText = submitBtn.innerText;
+
+            submitBtn.disabled = true;
+            submitBtn.innerText = '⏳ Đang xử lý...';
+
+/*
+          - Determine URL: Create if id == 0, otherwise Edit
+          - Used template literals for cleaner URL construction
+        */
+            try {
+                const url = (id === '0' || id === 0) ? '/FoodLocation/Create' : `/FoodLocation/Edit?id=${id}`;
+
+                const response = await fetch(url, {
+                    method: 'POST',
+                    body: formData
+                });
+
+                const result = await response.json();
+
+                if (result.success) {
+                    alert('✅ ' + (result.message || 'Lưu thành công!'));
+                    closeModal();
+                    location.reload();
+                } else {
+                    alert('❌ Lỗi: ' + (result.message || 'Lưu thất bại!'));
+                }
+            } catch (err) {
+                console.error('❌ Lỗi hệ thống:', err);
+                alert('❌ Lỗi kết nối đến Server.');
+            } finally {
+                submitBtn.disabled = false;
+                submitBtn.innerText = originalBtnText;
+            }
+        });
     </script>
 }

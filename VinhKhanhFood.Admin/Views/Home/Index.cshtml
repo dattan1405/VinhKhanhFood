@@ -1,16 +1,27 @@
 ﻿@model IEnumerable<VinhKhanhFood.Admin.Models.FoodLocation>
 @{
     ViewData["Title"] = "Dashboard Overview";
-    // Lấy 5 quán mới nhất từ danh sách đã sắp xếp ở Controller
-    var recentLocations = Model.Take(5);
     
-    // ✅ Tính tỷ lệ đã dịch thật từ Database
-    var total = Model.Count();
-    var translated = Model.Count(x => !string.IsNullOrEmpty(x.Description_EN));
+    // ✅ Fix: Handle null model
+    var locations = Model ?? new List<VinhKhanhFood.Admin.Models.FoodLocation>();
+    var recentLocations = locations.Take(5);
+    
+    // ✅ Fix: Tính tỷ lệ chính xác - kiểm tra TẤT CẢ ngôn ngữ
+    var total = locations.Count();
+    var translated = locations.Count(x => 
+        !string.IsNullOrEmpty(x.Name_EN) || 
+        !string.IsNullOrEmpty(x.Description_EN) ||
+        !string.IsNullOrEmpty(x.Name_KO) ||
+        !string.IsNullOrEmpty(x.Description_KO) ||
+        !string.IsNullOrEmpty(x.Name_JA) ||
+        !string.IsNullOrEmpty(x.Description_JA) ||
+        !string.IsNullOrEmpty(x.Name_ZH) ||
+        !string.IsNullOrEmpty(x.Description_ZH)
+    );
     var translationRate = total > 0 ? (translated * 100 / total) : 0;
     
-    // ✅ Tính số quán Online
-    var onlineCount = Model.Count(x => x.Status == "online");
+    // ✅ Fix: Case-insensitive status check
+    var onlineCount = locations.Count(x => x.Status?.ToLower() == "online");
 }
 
 <div class="p-8" style="font-family: 'Manrope', 'Inter', sans-serif">
@@ -81,38 +92,47 @@
                         </tr>
                     </thead>
                     <tbody class="divide-y divide-gray-50">
-                        @foreach (var item in recentLocations)
+                        @if (recentLocations.Any())
                         {
-                            <tr class="hover:bg-gray-50/30 transition-colors">
-                                <td class="px-8 py-5 font-bold text-slate-900">@item.Name</td>
-                                <td class="px-8 py-5">
-                                    @if (item.Status == "online")
-                                    {
-                                        <span class="inline-flex items-center px-3 py-1 rounded-full text-[10px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-100">
-                                            <span class="w-1.5 h-1.5 rounded-full mr-2 bg-emerald-500"></span> Online
-                                        </span>
-                                    }
-                                    else
-                                    {
-                                        <span class="inline-flex items-center px-3 py-1 rounded-full text-[10px] font-bold bg-yellow-50 text-yellow-700 border border-yellow-100">
-                                            <span class="w-1.5 h-1.5 rounded-full mr-2 bg-yellow-500"></span> Pending
-                                        </span>
-                                    }
-                                </td>
-                                <td class="px-8 py-5">
-                                    @if (!string.IsNullOrEmpty(item.Description_EN))
-                                    {
-                                        <span class="inline-flex items-center px-3 py-1 rounded-full text-[10px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-100">
-                                            <i data-lucide="check" class="w-3 h-3 mr-1"></i> Translated
-                                        </span>
-                                    }
-                                    else
-                                    {
-                                        <span class="inline-flex items-center px-3 py-1 rounded-full text-[10px] font-bold bg-red-50 text-red-700 border border-red-100">
-                                            <i data-lucide="x" class="w-3 h-3 mr-1"></i> Not Yet
-                                        </span>
-                                    }
-                                </td>
+                            @foreach (var item in recentLocations)
+                            {
+                                <tr class="hover:bg-gray-50/30 transition-colors">
+                                    <td class="px-8 py-5 font-bold text-slate-900">@item.Name</td>
+                                    <td class="px-8 py-5">
+                                        @if (item.Status?.ToLower() == "online")
+                                        {
+                                            <span class="inline-flex items-center px-3 py-1 rounded-full text-[10px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-100">
+                                                <span class="w-1.5 h-1.5 rounded-full mr-2 bg-emerald-500"></span> Online
+                                            </span>
+                                        }
+                                        else
+                                        {
+                                            <span class="inline-flex items-center px-3 py-1 rounded-full text-[10px] font-bold bg-yellow-50 text-yellow-700 border border-yellow-100">
+                                                <span class="w-1.5 h-1.5 rounded-full mr-2 bg-yellow-500"></span> Pending
+                                            </span>
+                                        }
+                                    </td>
+                                    <td class="px-8 py-5">
+                                        @if (!string.IsNullOrEmpty(item.Name_EN) || !string.IsNullOrEmpty(item.Description_EN))
+                                        {
+                                            <span class="inline-flex items-center px-3 py-1 rounded-full text-[10px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-100">
+                                                <i data-lucide="check" class="w-3 h-3 mr-1"></i> Translated
+                                            </span>
+                                        }
+                                        else
+                                        {
+                                            <span class="inline-flex items-center px-3 py-1 rounded-full text-[10px] font-bold bg-red-50 text-red-700 border border-red-100">
+                                                <i data-lucide="x" class="w-3 h-3 mr-1"></i> Not Yet
+                                            </span>
+                                        }
+                                    </td>
+                                </tr>
+                            }
+                        }
+                        else
+                        {
+                            <tr>
+                                <td colspan="3" class="px-8 py-5 text-center text-gray-500">Không có dữ liệu</td>
                             </tr>
                         }
                     </tbody>

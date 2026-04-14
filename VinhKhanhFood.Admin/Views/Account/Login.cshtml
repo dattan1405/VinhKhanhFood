@@ -2,22 +2,50 @@
 @{
     Layout = null;
 }
-<div style="max-width: 400px; margin: 80px auto; padding: 30px; border: 1px solid #ddd; border-radius: 15px; box-shadow: 0 4px 8px rgba(0,0,0,0.1); font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;">
-    <h2 style="text-align: center; color: #333;">Vinh Khanh Food Admin</h2>
-    <hr />
-    <form asp-action="Login" method="post">
-        <div style="margin-bottom: 15px;">
-            <label>Tên đăng nhập:</label>
-            <input asp-for="Username" style="width: 100%; padding: 10px; border-radius: 5px; border: 1px solid #ccc;" required />
-        </div>
-        <div style="margin-bottom: 20px;">
-            <label>Mật khẩu:</label>
-            <input asp-for="Password" type="password" style="width: 100%; padding: 10px; border-radius: 5px; border: 1px solid #ccc;" required />
-        </div>
-        <button type="submit" style="width: 100%; padding: 12px; background: #007bff; color: white; border: none; border-radius: 5px; cursor: pointer; font-size: 16px;">Đăng nhập</button>
-    </form>
-    @if (ViewBag.Error != null)
-    {
-        <p style="color: red; text-align: center; margin-top: 15px; font-weight: bold;">@ViewBag.Error</p>
-    }
-</div>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Admin Login - Vinh Khanh Food</title>
+</head>
+<body style="margin: 0; background: #f8fafc;">
+    <div style="max-width: 400px; margin: 80px auto; padding: 30px; border: 1px solid #ddd; border-radius: 15px; box-shadow: 0 4px 8px rgba(0,0,0,0.1); font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: white;">
+        <h2 style="text-align: center; color: #333; margin-top: 0;">Vinh Khanh Food Admin</h2>
+        <hr />
+
+        <form asp-action="Login" method="post" novalidate>
+            <div style="margin-bottom: 15px;">
+                <label for="Username" style="display: block; margin-bottom: 6px;">Tên đăng nhập:</label>
+                <input asp-for="Username"
+                       id="Username"
+                       autocomplete="username"
+                       style="width: 100%; padding: 10px; border-radius: 5px; border: 1px solid #ccc; box-sizing: border-box;"
+                       required />
+                <span asp-validation-for="Username" style="color: #dc2626; font-size: 12px;"></span>
+            </div>
+
+            <div style="margin-bottom: 20px;">
+                <label for="Password" style="display: block; margin-bottom: 6px;">Mật khẩu:</label>
+                <input asp-for="Password"
+                       id="Password"
+                       type="password"
+                       autocomplete="current-password"
+                       style="width: 100%; padding: 10px; border-radius: 5px; border: 1px solid #ccc; box-sizing: border-box;"
+                       required />
+                <span asp-validation-for="Password" style="color: #dc2626; font-size: 12px;"></span>
+            </div>
+
+            <button type="submit"
+                    style="width: 100%; padding: 12px; background: #007bff; color: white; border: none; border-radius: 5px; cursor: pointer; font-size: 16px;">
+                Đăng nhập
+            </button>
+        </form>
+
+        @if (ViewBag.Error != null)
+        {
+            <p style="color: #dc2626; text-align: center; margin-top: 15px; font-weight: 700;">@ViewBag.Error</p>
+        }
+    </div>
+</body>
+</html>
