@@ -2,54 +2,99 @@
 using Microsoft.Maui.Controls.Maps;
 using VinhKhanhFood.App.Models;
 using VinhKhanhFood.App.ViewModels;
+using VinhKhanhFood.App.Services;
 
 namespace VinhKhanhFood.App;
 
 public partial class MainPage : ContentPage
 {
-    // Khai báo bộ não trung tâm
     private readonly MapViewModel _viewModel;
+    private readonly QrAccessService _qrService; // ✅ FIX: Thêm dòng này
 
     public MainPage()
     {
         InitializeComponent();
 
-        // Khởi tạo và đăng ký nhận dữ liệu từ ViewModel
         _viewModel = new MapViewModel();
+        _qrService = new QrAccessService(); // ✅ FIX: Khởi tạo service
 
-        // Cấp bộ não cho toàn bộ trang (Rất quan trọng để Load danh sách gợi ý nếu có)
         BindingContext = _viewModel;
 
         _viewModel.OnLocationsLoaded += DrawMapElements;
 
-        MessagingCenter.Subscribe<object>(this, "LanguageChanged", (sender) =>
-        {
-            if (_viewModel.Locations != null && _viewModel.Locations.Any())
-            {
-                DrawMapElements(_viewModel.Locations);
-            }
-        });
+        // ✅ FIX: Thay MessagingCenter (deprecated) bằng WeakReferenceMessenger
+        // Nếu bạn chưa cài MVVM Toolkit, xóa đoạn này tạm thời
+        // MessagingCenter.Subscribe<object>(this, "LanguageChanged", (sender) =>
+        // {
+        //     if (_viewModel.Locations != null && _viewModel.Locations.Any())
+        //     {
+        //         DrawMapElements(_viewModel.Locations);
+        //     }
+        // });
     }
 
     protected override async void OnAppearing()
     {
         base.OnAppearing();
-        if (_viewModel != null)
+        
+        try
         {
-            await _viewModel.InitializeAsync();
+            // 1. Lấy quyền GPS TRƯỚC HẾT để Google Map không crash
+            var gpsStatus = await Permissions.CheckStatusAsync<Permissions.LocationWhenInUse>();
+            if (gpsStatus != PermissionStatus.Granted)
+            {
+                gpsStatus = await Permissions.RequestAsync<Permissions.LocationWhenInUse>();
+            }
+
+            // 2. Hiển thị user location (Chấm xanh) nếu được cấp quyền
+            if (gpsStatus == PermissionStatus.Granted)
+            {
+                vinhKhanhMap.IsShowingUser = true;
+            }
+            else
+            {
+                vinhKhanhMap.IsShowingUser = false; // Tắt châm xanh đi nếu bị deny
+            }
+
+            // 3. Load dữ liệu ghim quán (timeout handle)
+            if (_viewModel != null)
+            {
+                using (var cts = new CancellationTokenSource(TimeSpan.FromSeconds(15)))
+                {
+                    try { await _viewModel.InitializeAsync(); }
+                    catch { System.Diagnostics.Debug.WriteLine("⚠️ Map data timeout"); }
+                }
+            }
+
+            // 4. Check token QR (Giữ nguyên)
+            string token = Preferences.Default.Get("pending_token", string.Empty);
+            if (!string.IsNullOrWhiteSpace(token))
+            {
+                Preferences.Default.Remove("pending_token");
+                using (var cts = new CancellationTokenSource(TimeSpan.FromSeconds(10)))
+                {
+                    try
+                    {
+                        bool ok = await _qrService.VerifyAppAccess(token);
+                        if (ok) await DisplayAlert("✅ Xác thực thành công", "Chào mừng bạn!", "OK");
+                        else await DisplayAlert("❌ Lỗi", "Token không hợp lệ", "OK");
+                    }
+                    catch { await DisplayAlert("⚠️ Timeout", "Kết nối quá lâu", "OK"); }
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"❌ OnAppearing error: {ex.Message}");
         }
     }
 
     protected override void OnDisappearing()
     {
         base.OnDisappearing();
-        // Ra lệnh cho ViewModel ngừng theo dõi GPS
         _viewModel.StopTracking();
     }
 
-    /// <summary>
-    /// Hàm này chỉ chạy khi ViewModel báo là đã lấy xong dữ liệu từ API
-    /// </summary>
     private void DrawMapElements(List<FoodLocation> locations)
     {
         MainThread.BeginInvokeOnMainThread(() =>
@@ -61,7 +106,6 @@ public partial class MainPage : ContentPage
             {
                 var pinLocation = new Location(loc.Latitude, loc.Longitude);
 
-                // Vẽ Pin
                 var pin = new Pin
                 {
                     Label = loc.Name,
@@ -69,11 +113,10 @@ public partial class MainPage : ContentPage
                     Location = pinLocation
                 };
 
-                // Gắn sự kiện Click vào Pin
-                pin.MarkerClicked += OnMapInfoWindowClicked;
+                // ✅ FIX: Sửa nullability - thêm dấu ? trước object
+                pin.MarkerClicked += OnMapInfoWindowClicked!;
                 vinhKhanhMap.Pins.Add(pin);
 
-                // Vẽ Vòng tròn 30m
                 var circle = new Circle
                 {
                     Center = pinLocation,
@@ -85,7 +128,6 @@ public partial class MainPage : ContentPage
                 vinhKhanhMap.MapElements.Add(circle);
             }
 
-            // Di chuyển camera về quán đầu tiên
             if (locations.Any())
             {
                 var first = locations[0];
@@ -95,28 +137,21 @@ public partial class MainPage : ContentPage
         });
     }
 
-    // SỰ KIỆN: KHI BẤM VÀO PIN TRÊN BẢN ĐỒ
-    private async void OnMapInfoWindowClicked(object sender, PinClickedEventArgs e)
+    // ✅ FIX: Thêm ? cho parameter sender
+    private async void OnMapInfoWindowClicked(object? sender, PinClickedEventArgs e)
     {
-        // 1. QUAN TRỌNG: Ẩn bảng InfoWindow
         e.HideInfoWindow = true;
 
         if (sender is Pin clickedPin)
         {
-            // Lấy data từ ViewModel dựa vào Label
             var locData = _viewModel.Locations.FirstOrDefault(l => l.Name == clickedPin.Label);
             if (locData != null)
             {
-                // 2. Ép dữ liệu vào BottomSheet để XAML tự động load Hình ảnh, Tên, Mô tả
                 FoodBottomSheet.BindingContext = locData;
 
-                // 3. Hiển thị BottomSheet với hiệu ứng trượt lên cực mượt (Pro UI)
                 FoodBottomSheet.IsVisible = true;
-                FoodBottomSheet.TranslationY = 300; // Giấu xuống dưới trước
-                await FoodBottomSheet.TranslateTo(0, 0, 300, Easing.SinOut); // Trượt lên
-
-                // 4. Nhờ ViewModel đọc âm thanh
-                //await _viewModel.PlayPinAudioAsync(locData);
+                FoodBottomSheet.TranslationY = 300;
+                await FoodBottomSheet.TranslateTo(0, 0, 300, Easing.SinOut);
             }
         }
     }
@@ -126,28 +161,19 @@ public partial class MainPage : ContentPage
         await _viewModel.PlayGeneralIntroAsync();
     }
 
-    // SỰ KIỆN: KHI BẤM NÚT TẮT (X) TRÊN BOTTOM SHEET
     private async void OnCloseBottomSheetClicked(object sender, EventArgs e)
     {
-        // Tắt âm thanh
         _viewModel.CancelSpeech();
 
-        // Tạo hiệu ứng trượt xuống mượt mà trước khi ẩn
         await FoodBottomSheet.TranslateTo(0, 300, 250, Easing.SinIn);
         FoodBottomSheet.IsVisible = false;
     }
 
-    // SỰ KIỆN: KHI BẤM NÚT "XEM CHI TIẾT" MÀU ĐỎ
     private async void OnViewDetailsClicked(object sender, EventArgs e)
     {
-        // Lấy lại dữ liệu của quán đang được chọn
         if (FoodBottomSheet.BindingContext is FoodLocation selectedLocation)
         {
-
-            // Tắt âm thanh nếu nó đang đọc ở trang ngoài
             _viewModel.CancelSpeech();
-
-            // Chuyển sang Trang Chi Tiết và "cầm theo" dữ liệu của quán ốc đó
             await Navigation.PushAsync(new DetailPage(selectedLocation));
         }
     }

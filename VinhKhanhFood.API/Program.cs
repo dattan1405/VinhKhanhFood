@@ -17,6 +17,7 @@ builder.Services.AddDbContext<VinhKhanhFood.API.Data.AppDbContext>(options =>
     options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
 
 builder.Services.AddControllers();
+builder.Services.AddRazorPages(); // ✅ THÊM DÒNG NÀY
 builder.Services.AddOpenApi();
 
 var app = builder.Build();
@@ -34,6 +35,7 @@ app.UseStaticFiles(); // cho phép truy cập các fiel tĩnh trong wwwroot
 //app.UseHttpsRedirection();
 app.UseAuthorization();
 app.MapControllers();
+app.MapRazorPages(); // ✅ THÊM DÒNG NÀY
 
 
 // REDIRECT: Khi mở web sẽ vào thẳng trang giao diện

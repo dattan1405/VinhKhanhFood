@@ -10,5 +10,7 @@ namespace VinhKhanhFood.API.Data
         public DbSet<FoodLocation> FoodLocations { get; set; }
 
         public DbSet<User> Users { get; set; }
+
+        public DbSet<QrManagement> QRManagement { get; set; }
     }
 }

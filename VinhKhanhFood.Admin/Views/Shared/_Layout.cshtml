@@ -60,10 +60,13 @@
             </nav>
 
             <div class="p-4 border-t border-emerald-900/50 mt-auto bg-[#064E3B]">
-                <a href="#" class="flex items-center gap-3 px-4 py-3 rounded-xl text-rose-300 hover:bg-rose-500/10 transition-all">
-                    <i data-lucide="log-out" class="w-5 h-5"></i>
-                    <span class="font-semibold text-sm">Logout</span>
-                </a>
+                <form asp-controller="Account" asp-action="Logout" method="post">
+                    @Html.AntiForgeryToken()
+                    <button type="submit" class="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-rose-300 hover:bg-rose-500/10 transition-all">
+                        <i data-lucide="log-out" class="w-5 h-5"></i>
+                        <span class="font-semibold text-sm">Logout</span>
+                    </button>
+                </form>
             </div>
         </aside>
 
@@ -109,18 +112,34 @@
 
                     <div class="w-px h-6 bg-gray-200"></div>
 
-                    <!-- User Profile -->
+                    <!-- QR & User Profile -->
                     <div class="flex items-center gap-3">
-                        <div class="w-9 h-9 rounded-full border-2 overflow-hidden bg-emerald-100"
-                             style="border-color: #064E3B;">
-                            <img src="https://api.dicebear.com/7.x/avataaars/svg?seed=TanDat" 
-                                 class="w-full h-full" 
-                                 alt="User Avatar" />
+
+                        <!-- Generate App Access QR Button -->
+                        <button onclick="handleGenerateAppQR()" 
+                               class="hidden md:flex h-10 px-4 font-bold text-white rounded-xl shadow-md hover:shadow-lg transition-all items-center"
+                               style="background-color: #064E3B">
+                            <i data-lucide="qr-code" class="w-5 h-5 mr-2"></i>
+                            Generate App Access QR
+                        </button>
+
+                        <!-- Divider -->
+                        <div class="w-px h-6 bg-gray-200 hidden md:block"></div>
+
+                        <!-- User Profile -->
+                        <div class="flex items-center gap-3">
+                            <div class="w-9 h-9 rounded-full border-2 overflow-hidden bg-emerald-100"
+                                 style="border-color: #064E3B;">
+                                <img src="https://api.dicebear.com/7.x/avataaars/svg?seed=TanDat" 
+                                     class="w-full h-full" 
+                                     alt="User Avatar" />
+                            </div>
+                            <div class="text-left">
+                                <p class="text-sm font-bold text-slate-900">@Context.Session.GetString("UserName")</p>
+                                <p class="text-xs text-gray-500 font-medium">@Context.Session.GetString("UserRole")</p>
+                            </div>
                         </div>
-                        <div class="text-left">
-                            <p class="text-sm font-bold text-slate-900">@Context.Session.GetString("UserName")</p>
-                            <p class="text-xs text-gray-500 font-medium">@Context.Session.GetString("UserRole")</p>
-                        </div>
+
                     </div>
 
                 </div>
@@ -135,6 +154,98 @@
 
     <script src="~/lib/jquery/dist/jquery.min.js"></script>
     <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+
+    <!-- QR Modal -->
+    <div id="qrModal" class="hidden fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-[9999] flex items-center justify-center p-4">
+        <div class="bg-white rounded-[32px] shadow-2xl max-w-sm w-full p-8 text-center relative animate-in fade-in zoom-in duration-200">
+            <div class="flex justify-center mb-4">
+                <div class="w-14 h-14 rounded-2xl flex items-center justify-center" style="background-color: #FEF3C7">
+                    <i data-lucide="store" class="w-8 h-8" style="color: #F59E0B"></i>
+                </div>
+            </div>
+            <h2 class="text-2xl font-extrabold text-slate-900 mb-1">App Access Token</h2>
+            <p class="text-sm font-medium text-gray-500 mb-6">Scan this QR code to access the mobile app</p>
+
+            <div class="bg-white p-6 rounded-2xl border-2 border-gray-100 shadow-sm inline-block mb-6">
+                <div id="qrcodeDisplay"></div>
+            </div>
+
+            <div class="flex items-center justify-center gap-2 text-red-500 font-bold mb-6">
+                <i data-lucide="clock" class="w-5 h-5"></i>
+                <span id="qrTimer">Expires in 05:00</span>
+            </div>
+
+            <div class="bg-gray-50 rounded-xl p-4 border border-gray-200 mb-8">
+                <p class="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1 text-left">Access Token</p>
+                <p id="tokenText" class="text-xs font-mono font-semibold text-slate-900 break-all text-left"></p>
+            </div>
+
+            <div class="flex flex-col gap-3">
+                <button onclick="downloadQR()" class="w-full py-4 border-2 border-[#064E3B] text-[#064E3B] font-bold rounded-2xl flex items-center justify-center gap-2">
+                    <i data-lucide="download" class="w-5 h-5"></i> Download PNG
+                </button>
+                <button onclick="closeQRModal()" class="w-full py-4 bg-[#064E3B] text-white font-bold rounded-2xl">Close</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let timerInterval;
+
+        async function handleGenerateAppQR() {
+            const token = crypto.randomUUID();
+            try {
+                const res = await fetch('http://10.17.186.213:5020/api/QrManagement', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ token: token })
+                });
+
+                if (res.ok) {
+                    document.getElementById('tokenText').innerText = token;
+                    document.getElementById('qrModal').classList.remove('hidden');
+
+                    const container = document.getElementById('qrcodeDisplay');
+                    container.innerHTML = '';
+                    new QRCode(container, {
+                        text: `http://10.17.186.213:5020/qr/launch?token=${token}`,
+                        width: 220,
+                        height: 220,
+                        colorDark: '#064E3B'
+                    });
+
+                    startTimer(300);
+                    lucide.createIcons();
+                } else {
+                    const err = await res.text();
+                    alert('Không tạo được token.\n' + err);
+                }
+            } catch (e) {
+                alert('Lỗi kết nối API Server!');
+            }
+        }
+
+        function startTimer(duration) {
+            let timer = duration;
+            clearInterval(timerInterval);
+            timerInterval = setInterval(() => {
+                let mins = Math.floor(timer / 60);
+                let secs = timer % 60;
+                document.getElementById('qrTimer').innerText = `Expires in ${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+                if (--timer < 0) {
+                    clearInterval(timerInterval);
+                    document.getElementById('qrcodeDisplay').style.opacity = '0.3';
+                    document.getElementById('qrTimer').innerText = 'Expired';
+                }
+            }, 1000);
+        }
+
+        function closeQRModal() {
+            document.getElementById('qrModal').classList.add('hidden');
+            clearInterval(timerInterval);
+        }
+    </script>
 
     <script>
         lucide.createIcons();

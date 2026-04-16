@@ -19,14 +19,12 @@ namespace VinhKhanhFood.Admin.Controllers
             var client = _httpClientFactory.CreateClient("MyAPI");
             var content = new StringContent(JsonConvert.SerializeObject(loginInfo), Encoding.UTF8, "application/json");
 
-            // Gọi sang API đã viết ở bước trước
             var response = await client.PostAsync("User/login", content);
             if (response.IsSuccessStatusCode)
             {
                 var userJson = await response.Content.ReadAsStringAsync();
                 var user = JsonConvert.DeserializeObject<User>(userJson);
 
-                // Lưu vào Session để các trang sau biết các thông tin của người dùng đã đăng nhập
                 HttpContext.Session.SetString("UserRole", user.Role);
                 HttpContext.Session.SetString("UserName", user.FullName);
                 HttpContext.Session.SetInt32("UserId", user.Id);
@@ -38,10 +36,20 @@ namespace VinhKhanhFood.Admin.Controllers
             return View();
         }
 
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        [ActionName("Logout")]
+        public IActionResult LogoutPost()
+        {
+            HttpContext.Session.Clear();
+            return RedirectToAction(nameof(Login));
+        }
+
+        [HttpGet]
         public IActionResult Logout()
         {
             HttpContext.Session.Clear();
-            return RedirectToAction("Login");
+            return RedirectToAction(nameof(Login));
         }
     }
 }
