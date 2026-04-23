@@ -9,6 +9,8 @@ namespace VinhKhanhFood.Admin.Controllers
     public class FoodLocationController : Controller
     {
         private readonly IHttpClientFactory _httpClientFactory;
+        private const string ApiBaseUrl = "http://localhost:5020";
+        private const string PublicBaseUrl = "http://localhost:7065";
 
         public FoodLocationController(IHttpClientFactory httpClientFactory)
         {
@@ -35,58 +37,53 @@ namespace VinhKhanhFood.Admin.Controllers
         {
             try
             {
-                model.Name = model.Name?.Trim();
-                model.Description = model.Description?.Trim();
-                if (string.IsNullOrEmpty(model.Status))
-                    model.Status = "pending";
+                var client = _httpClientFactory.CreateClient();
 
-                // Parse coords from raw form (allow comma or dot)
-                string rawLat = Request.Form["Latitude"].ToString() ?? "";
-                string rawLng = Request.Form["Longitude"].ToString() ?? "";
-                rawLat = rawLat.Replace(',', '.').Trim();
-                rawLng = rawLng.Replace(',', '.').Trim();
+                // Bước 1: Gửi yêu cầu tạo mới POI lên API (multipart + ảnh)
+                using var content = new MultipartFormDataContent();
+                content.Add(new StringContent(model.Name ?? ""), "Name");
+                content.Add(new StringContent(model.Description ?? ""), "Description");
+                content.Add(new StringContent(model.Status ?? "pending"), "Status");
+                content.Add(new StringContent(model.Latitude.ToString(System.Globalization.CultureInfo.InvariantCulture)), "Latitude");
+                content.Add(new StringContent(model.Longitude.ToString(System.Globalization.CultureInfo.InvariantCulture)), "Longitude");
 
-                // Build multipart for API
-                using (var client = _httpClientFactory.CreateClient())
-                using (var content = new MultipartFormDataContent())
+                if (model.ImageFile != null)
                 {
-                    // add text fields
-                    content.Add(new StringContent(model.Name ?? ""), "Name");
-                    content.Add(new StringContent(model.Description ?? ""), "Description");
-                    content.Add(new StringContent(model.Status ?? "pending"), "Status");
-
-                    if (double.TryParse(rawLat, System.Globalization.NumberStyles.Any, System.Globalization.CultureInfo.InvariantCulture, out double parsedLat))
-                        content.Add(new StringContent(parsedLat.ToString(System.Globalization.CultureInfo.InvariantCulture)), "Latitude");
-
-                    if (double.TryParse(rawLng, System.Globalization.NumberStyles.Any, System.Globalization.CultureInfo.InvariantCulture, out double parsedLng))
-                        content.Add(new StringContent(parsedLng.ToString(System.Globalization.CultureInfo.InvariantCulture)), "Longitude");
-
-                    // add file if exists
-                    if (model.ImageFile != null && model.ImageFile.Length > 0)
-                    {
-                        var streamContent = new StreamContent(model.ImageFile.OpenReadStream());
-                        streamContent.Headers.ContentType = new System.Net.Http.Headers.MediaTypeHeaderValue(model.ImageFile.ContentType ?? "application/octet-stream");
-                        content.Add(streamContent, "ImageFile", Path.GetFileName(model.ImageFile.FileName));
-                    }
-
-                    // send to API (assumes API accepts multipart POST to /api/Food)
-                    var response = await client.PostAsync("http://localhost:5020/api/Food", content);
-                    var responseBody = await response.Content.ReadAsStringAsync();
-
-                    if (response.IsSuccessStatusCode)
-                    {
-                        // Return JSON consistent with Edit
-                        return Json(new { success = true, message = "Thêm mới thành công!" });
-                    }
-                    else
-                    {
-                        return Json(new { success = false, message = $"Lỗi từ API: {responseBody}" });
-                    }
+                    var streamContent = new StreamContent(model.ImageFile.OpenReadStream());
+                    streamContent.Headers.ContentType = new System.Net.Http.Headers.MediaTypeHeaderValue(model.ImageFile.ContentType ?? "application/octet-stream");
+                    content.Add(streamContent, "ImageFile", model.ImageFile.FileName);
                 }
+
+                var response = await client.PostAsync("http://192.168.130.213:5020/api/Food", content);
+
+                if (response.IsSuccessStatusCode)
+                {
+                    var responseBody = await response.Content.ReadAsStringAsync();
+                    var createdPoi = JsonConvert.DeserializeObject<FoodLocation>(responseBody);
+
+                    if (createdPoi == null || createdPoi.Id <= 0)
+                    {
+                        return Json(new { success = false, message = "API không trả về ID hợp lệ." });
+                    }
+
+                    // Bước 2: Tạo link QR dựa trên ID vừa tạo
+                    string publicUrl = $"http://192.168.130.213:7065/PublicPOI/Details/{createdPoi.Id}";
+                    createdPoi.QRCodeUrl = publicUrl;
+
+                    // Bước 3: Cập nhật ngược lại QRCodeUrl
+                    var updateJson = JsonConvert.SerializeObject(createdPoi);
+                    var updateContent = new StringContent(updateJson, Encoding.UTF8, "application/json");
+
+                    await client.PutAsync($"http://192.168.130.213:5020/api/Food/{createdPoi.Id}", updateContent);
+
+                    return Json(new { success = true, message = "Thêm cửa hàng và tạo mã QR thành công!" });
+                }
+
+                return Json(new { success = false, message = "Lỗi khi tạo dữ liệu trên API." });
             }
             catch (Exception ex)
             {
-                return Json(new { success = false, message = ex.Message });
+                return Json(new { success = false, message = "Lỗi kết nối: " + ex.Message });
             }
         }
 

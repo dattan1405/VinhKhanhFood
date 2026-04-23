@@ -1,46 +1,62 @@
-﻿using System;
-using System.Net.Http.Json;
+﻿using System.Net.Http.Json;
 
 namespace VinhKhanhFood.App.Services
 {
     public class QrAccessService
     {
-        private const string ApiBaseUrl = "http://10.17.186.213:5020";
+        //máy thật
+        private const string ApiBaseUrl = "http://192.168.130.213:5020";
+        //máy ảo
+        //private const string ApiBaseUrl = "http://10.0.2.2:5020";
+
+        private sealed class DeviceHeartbeatRequest
+        {
+            public string DeviceId { get; set; } = string.Empty;
+        }
+
+        public string GetDeviceId()
+        {
+            return $"{Microsoft.Maui.Devices.DeviceInfo.Current.Platform}_{Microsoft.Maui.Devices.DeviceInfo.Current.Model}_{Microsoft.Maui.Devices.DeviceInfo.Current.Name}";
+        }
 
         public async Task<bool> VerifyAppAccess(string token)
         {
             try
             {
-                string deviceId = $"{Microsoft.Maui.Devices.DeviceInfo.Current.Model}_{Microsoft.Maui.Devices.DeviceInfo.Current.Name}";
+                string deviceId = GetDeviceId();
 
-                // ✅ FIX: Tăng timeout từ 10s → 30s
-                using var client = new HttpClient();
+                using HttpClient client = new HttpClient();
                 client.Timeout = TimeSpan.FromSeconds(30);
-                
-                var url = $"{ApiBaseUrl}/api/QrManagement/verify";
+
+                string url = $"{ApiBaseUrl}/api/QrManagement/verify";
                 var payload = new { Token = token, DeviceId = deviceId };
-                
-                System.Diagnostics.Debug.WriteLine($"📱 Verify token: {token}");
-                System.Diagnostics.Debug.WriteLine($"🌐 API URL: {url}");
 
-                var response = await client.PostAsJsonAsync(url, payload);
-
-                System.Diagnostics.Debug.WriteLine($"✅ Verify response: {response.StatusCode}");
+                HttpResponseMessage response = await client.PostAsJsonAsync(url, payload);
                 return response.IsSuccessStatusCode;
             }
-            catch (HttpRequestException ex)
+            catch
             {
-                System.Diagnostics.Debug.WriteLine($"❌ Network error: {ex.Message}");
                 return false;
             }
-            catch (TaskCanceledException ex)
+        }
+
+        public async Task<bool> SendHeartbeatAsync()
+        {
+            try
             {
-                System.Diagnostics.Debug.WriteLine($"❌ Timeout error: {ex.Message}");
-                return false;
+                string deviceId = GetDeviceId();
+
+                using HttpClient client = new HttpClient();
+                client.Timeout = TimeSpan.FromSeconds(10);
+
+                string url = $"{ApiBaseUrl}/api/QrManagement/heartbeat";
+                DeviceHeartbeatRequest payload = new DeviceHeartbeatRequest { DeviceId = deviceId };
+
+                HttpResponseMessage response = await client.PostAsJsonAsync(url, payload);
+                return response.IsSuccessStatusCode;
             }
-            catch (Exception ex)
+            catch
             {
-                System.Diagnostics.Debug.WriteLine($"❌ General error: {ex.Message}");
                 return false;
             }
         }

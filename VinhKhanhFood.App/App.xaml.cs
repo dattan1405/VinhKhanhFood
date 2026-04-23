@@ -1,9 +1,12 @@
-﻿namespace VinhKhanhFood.App
+﻿using VinhKhanhFood.App.Services;
+
+namespace VinhKhanhFood.App
 {
     public partial class App : Application
     {
         // 1. Biến riêng tư để lưu trong RAM
         private static string _currentLanguage = "vi";
+        private readonly HeartbeatService _heartbeatService = new HeartbeatService();
 
         // 2. Property công khai để các trang khác gọi tới
         public static string CurrentLanguage
@@ -29,7 +32,15 @@
 
         protected override Window CreateWindow(IActivationState? activationState)
         {
-            return new Window(new AppShell());
+            Window window = new Window(new AppShell());
+
+            window.Created += (_, _) => _heartbeatService.Start();
+            window.Resumed += (_, _) => _heartbeatService.Start();
+
+            window.Stopped += (_, _) => _heartbeatService.Stop();
+            window.Destroying += (_, _) => _heartbeatService.Stop();
+
+            return window;
         }
     }
 }

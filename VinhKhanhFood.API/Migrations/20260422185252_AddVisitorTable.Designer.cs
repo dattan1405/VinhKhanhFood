@@ -3,6 +3,7 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using VinhKhanhFood.API.Data;
 
@@ -11,9 +12,11 @@ using VinhKhanhFood.API.Data;
 namespace VinhKhanhFood.API.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    partial class AppDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260422185252_AddVisitorTable")]
+    partial class AddVisitorTable
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -82,7 +85,7 @@ namespace VinhKhanhFood.API.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("FoodLocations", (string)null);
+                    b.ToTable("FoodLocations");
                 });
 
             modelBuilder.Entity("VinhKhanhFood.API.Models.QrManagement", b =>
@@ -115,7 +118,7 @@ namespace VinhKhanhFood.API.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("QRManagement", (string)null);
+                    b.ToTable("QRManagement");
                 });
 
             modelBuilder.Entity("VinhKhanhFood.API.Models.User", b =>
@@ -144,7 +147,7 @@ namespace VinhKhanhFood.API.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("Users", (string)null);
+                    b.ToTable("Users");
                 });
 
             modelBuilder.Entity("VinhKhanhFood.API.Models.Visitor", b =>
@@ -179,7 +182,7 @@ namespace VinhKhanhFood.API.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("Visitors", (string)null);
+                    b.ToTable("Visitors");
                 });
 #pragma warning restore 612, 618
         }

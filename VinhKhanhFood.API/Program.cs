@@ -18,6 +18,7 @@ builder.Services.AddDbContext<VinhKhanhFood.API.Data.AppDbContext>(options =>
 
 builder.Services.AddControllers();
 builder.Services.AddRazorPages(); // ✅ THÊM DÒNG NÀY
+builder.Services.AddHttpClient();
 builder.Services.AddOpenApi();
 
 var app = builder.Build();

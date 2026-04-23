@@ -6,7 +6,7 @@
     <div class="max-w-[1600px] mx-auto px-8 py-8">
         <div class="mb-8 flex items-center justify-between">
             <div>
-                <h1 class="text-4xl font-bold text-slate-900 mb-2">Quản lý địa điểm (POI)</h1>
+                <h1 class="text-4xl font-bold text-slate-900 mb-2">Location management (POI)</h1>
                 <p class="text-sm text-gray-600 font-medium">Manage all food locations in Vinh Khanh Food Street</p>
             </div>
             <button onclick="openAddModal()" class="h-12 px-6 font-bold text-white rounded-xl shadow-lg hover:shadow-xl transition-all flex items-center"
@@ -44,6 +44,7 @@
                             <th class="font-bold text-gray-700 py-4 text-xs uppercase tracking-wider">Restaurant Name</th>
                             <th class="font-bold text-gray-700 py-4 text-xs uppercase tracking-wider">Description</th>
                             <th class="font-bold text-gray-700 py-4 text-xs uppercase tracking-wider w-32">Status</th>
+                            <th class="font-bold text-gray-700 py-4 text-xs uppercase tracking-wider text-center w-40">Mã QR</th>
                             <th class="font-bold text-gray-700 py-4 text-xs uppercase tracking-wider text-center w-40">Languages</th>
                             <th class="font-bold text-gray-700 pr-6 py-4 text-right text-xs uppercase tracking-wider w-80">Actions</th>
                         </tr>
@@ -97,6 +98,22 @@
                                         }
                                     </button>
                                 </td>
+                                <!-- ✅ CỘT MÁ QR MỚI -->
+                                <td class="py-5 text-center">
+                                    @if (!string.IsNullOrEmpty(item.QRCodeUrl))
+                                    {
+                                        <button type="button"
+                                                class="px-3 py-2 rounded-lg bg-emerald-50 text-emerald-700 border border-emerald-200 font-bold text-xs hover:bg-emerald-100 transition-all"
+                                                onclick="openQrModal('@item.QRCodeUrl', '@item.Name', @item.Id)">
+                                            Xem QR
+                                        </button>
+                                    }
+                                    else
+                                    {
+                                        <span class="text-xs text-gray-400 italic">Chưa có</span>
+                                    }
+                                </td>
+                                <!-- ✅ CỘT LANGUAGES -->
                                 <td class="py-5 text-center">
                                     <div class="flex flex-wrap justify-center gap-1">
                                         @if (!string.IsNullOrEmpty(item.Name_EN) && !string.IsNullOrEmpty(item.Description_EN))
@@ -252,6 +269,38 @@
                 <button type="submit" id="submitBtn" class="bg-[#064E3B] text-white px-8 py-3 rounded-xl font-bold">Add POI</button>
             </div>
         </form>
+    </div>
+</div>
+
+<div id="qrPreviewModal" class="hidden fixed inset-0 z-[10000] flex items-center justify-center p-4">
+    <div class="absolute inset-0 bg-black/60" onclick="closeQrModal()"></div>
+
+    <div class="relative bg-white rounded-3xl shadow-2xl p-6 max-w-sm w-full">
+        <div class="flex items-start justify-between mb-4">
+            <div>
+                <h3 id="qrTitle" class="text-xl font-extrabold text-slate-900">QR Code</h3>
+                <p id="qrSubTitle" class="text-sm text-gray-500">Scan to open POI page</p>
+            </div>
+            <button type="button" onclick="closeQrModal()" class="text-gray-500 hover:text-gray-800">
+                <i data-lucide="x"></i>
+            </button>
+        </div>
+
+        <div class="bg-gray-50 rounded-2xl p-4 border border-gray-100 flex justify-center">
+            <img id="qrPreviewImage" src="" alt="QR Preview" class="w-64 h-64 rounded-xl shadow-sm" />
+        </div>
+
+        <div class="mt-4 text-xs text-gray-500 break-all">
+            <span class="font-bold">Link:</span> <span id="qrPreviewLink"></span>
+        </div>
+
+        <div class="mt-5 flex justify-end gap-2">
+            <button type="button"
+                    class="px-4 py-2 rounded-xl bg-gray-100 text-gray-700 font-semibold"
+                    onclick="closeQrModal()">
+                Đóng
+            </button>
+        </div>
     </div>
 </div>
 
@@ -592,5 +641,28 @@
                 submitBtn.innerText = originalBtnText;
             }
         });
+
+        // ✅ THÊM HÀM COPY QR LINK
+        function copyToClipboard(text) {
+            navigator.clipboard.writeText(text).then(() => {
+                alert('✅ Đã copy link QR!');
+            }).catch(() => {
+                alert('❌ Lỗi copy link');
+            });
+        }
+
+        function openQrModal(qrUrl, poiName, poiId) {
+            document.getElementById('qrTitle').innerText = poiName || `POI #${poiId}`;
+            document.getElementById('qrPreviewLink').innerText = qrUrl;
+            document.getElementById('qrPreviewImage').src =
+                `https://api.qrserver.com/v1/create-qr-code/?size=280x280&data=${encodeURIComponent(qrUrl)}`;
+
+            document.getElementById('qrPreviewModal').classList.remove('hidden');
+        }
+
+        function closeQrModal() {
+            document.getElementById('qrPreviewModal').classList.add('hidden');
+            document.getElementById('qrPreviewImage').src = '';
+        }
     </script>
 }

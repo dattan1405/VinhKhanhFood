@@ -1,4 +1,7 @@
-﻿namespace VinhKhanhFood.API.Models
+﻿using Microsoft.AspNetCore.Http;
+using System.ComponentModel.DataAnnotations.Schema;
+
+namespace VinhKhanhFood.API.Models
 {
     public class FoodLocation
     {
@@ -35,5 +38,9 @@
 
         // Thông tin quản lý (Phân quyền Vendor)
         public int? OwnerId { get; set; }
+
+        public string? QRCodeUrl { get; set; }
+        [NotMapped]
+        public IFormFile? ImageFile { get; set; }
     }
 }

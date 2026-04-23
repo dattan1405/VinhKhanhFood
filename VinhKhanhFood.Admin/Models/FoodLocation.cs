@@ -35,5 +35,7 @@
         // Xử lý upload ảnh
         public IFormFile? ImageFile { get; set; }
         public string Status { get; set; } = "pending";
+
+        public string? QRCodeUrl { get; set; }
     }
 }

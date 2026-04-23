@@ -3,6 +3,8 @@ using Microsoft.EntityFrameworkCore;
 using VinhKhanhFood.API.Data;
 using VinhKhanhFood.API.Models;
 using System.Globalization;
+using System.Net.Http.Headers;
+using Newtonsoft.Json;
 
 namespace VinhKhanhFood.API.Controllers
 {
@@ -11,9 +13,11 @@ namespace VinhKhanhFood.API.Controllers
     public class FoodController : ControllerBase
     {
         private readonly AppDbContext _context;
-        public FoodController(AppDbContext context)
+        private readonly IHttpClientFactory _httpClientFactory;
+        public FoodController(AppDbContext context, IHttpClientFactory httpClientFactory)
         {
             _context = context;
+            _httpClientFactory = httpClientFactory;
         }
 
         // 1. LẤY TẤT CẢ CHO ADMIN (Gọi: api/Food/all)
@@ -45,37 +49,69 @@ namespace VinhKhanhFood.API.Controllers
         // ✅ 1. SỬA HÀM CREATE ĐỂ NHẬN ẢNH TỪ ADMIN 
         // ========================================================
         [HttpPost]
-        public async Task<ActionResult<FoodLocation>> PostFoodLocation([FromForm] FoodLocation foodLocation, IFormFile? ImageFile)
+        public async Task<IActionResult> Create([FromForm] FoodLocation model)
         {
-            // Trích xuất tọa độ nếu Admin gửi theo kiểu String trong Form Data (thay cho Formatter)
-            string rawLat = Request.Form["Latitude"].ToString() ?? "";
-            string rawLng = Request.Form["Longitude"].ToString() ?? "";
-            if (double.TryParse(rawLat.Replace(',', '.'), NumberStyles.Any, CultureInfo.InvariantCulture, out var lat))
-                foodLocation.Latitude = lat;
-            if (double.TryParse(rawLng.Replace(',', '.'), NumberStyles.Any, CultureInfo.InvariantCulture, out var lng))
-                foodLocation.Longitude = lng;
-
-            // Xử lý upload và lưu ảnh trực tiếp trên thư mục API để App có thể gọi
-            if (ImageFile != null && ImageFile.Length > 0)
+            try
             {
-                var imageDirectory = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", "images");
-                if (!Directory.Exists(imageDirectory))
-                    Directory.CreateDirectory(imageDirectory);
+                var client = _httpClientFactory.CreateClient();
 
-                var fileName = $"{Guid.NewGuid()}_{Path.GetFileName(ImageFile.FileName)}";
-                var filePath = Path.Combine(imageDirectory, fileName);
+                using MultipartFormDataContent content = new MultipartFormDataContent();
+                content.Add(new StringContent(model.Name ?? string.Empty), "Name");
+                content.Add(new StringContent(model.Description ?? string.Empty), "Description");
+                content.Add(new StringContent(model.Status ?? "pending"), "Status");
+                content.Add(new StringContent(model.Latitude.ToString(System.Globalization.CultureInfo.InvariantCulture)), "Latitude");
+                content.Add(new StringContent(model.Longitude.ToString(System.Globalization.CultureInfo.InvariantCulture)), "Longitude");
 
-                using (var stream = new FileStream(filePath, FileMode.Create))
+                if (model.ImageFile != null && model.ImageFile.Length > 0)
                 {
-                    await ImageFile.CopyToAsync(stream);
+                    StreamContent streamContent = new StreamContent(model.ImageFile.OpenReadStream());
+                    streamContent.Headers.ContentType = new MediaTypeHeaderValue(model.ImageFile.ContentType ?? "application/octet-stream");
+                    content.Add(streamContent, "ImageFile", Path.GetFileName(model.ImageFile.FileName));
                 }
 
-                foodLocation.ImageUrl = fileName;
-            }
+                HttpResponseMessage response = await client.PostAsync("http://192.168.130.213:5020/api/Food", content);
 
-            _context.FoodLocations.Add(foodLocation);
-            await _context.SaveChangesAsync();
-            return CreatedAtAction(nameof(GetFoodLocation), new { id = foodLocation.Id }, foodLocation);
+                if (!response.IsSuccessStatusCode)
+                {
+                    string responseBody = await response.Content.ReadAsStringAsync();
+                    return Ok(new { success = false, message = $"Lỗi khi tạo dữ liệu trên API: {responseBody}" });
+                }
+
+                string createdJson = await response.Content.ReadAsStringAsync();
+                FoodLocation? createdPoi = JsonConvert.DeserializeObject<FoodLocation>(createdJson);
+
+                if (createdPoi == null || createdPoi.Id <= 0)
+                {
+                    return Ok(new { success = false, message = "API không trả về ID hợp lệ." });
+                }
+
+                string publicUrl = $"http://192.168.130.213:7065/PublicPOI/Details/{createdPoi.Id}";
+                createdPoi.QRCodeUrl = publicUrl;
+
+                using MultipartFormDataContent updateContent = new MultipartFormDataContent();
+                updateContent.Add(new StringContent(createdPoi.Name ?? string.Empty), "Name");
+                updateContent.Add(new StringContent(createdPoi.Description ?? string.Empty), "Description");
+                updateContent.Add(new StringContent(createdPoi.Status ?? "pending"), "Status");
+                updateContent.Add(new StringContent(createdPoi.Latitude.ToString(System.Globalization.CultureInfo.InvariantCulture)), "Latitude");
+                updateContent.Add(new StringContent(createdPoi.Longitude.ToString(System.Globalization.CultureInfo.InvariantCulture)), "Longitude");
+                updateContent.Add(new StringContent(publicUrl), "QRCodeUrl");
+
+                HttpResponseMessage updateRes = await client.PutAsync(
+                    $"http://192.168.1.3:5020/api/Food/{createdPoi.Id}",
+                    updateContent);
+
+                if (!updateRes.IsSuccessStatusCode)
+                {
+                    string updateErr = await updateRes.Content.ReadAsStringAsync();
+                    return Ok(new { success = false, message = $"Lỗi update QR: {updateErr}" });
+                }
+
+                return Ok(new { success = true, message = "Thêm cửa hàng và tạo mã QR thành công!" });
+            }
+            catch (Exception ex)
+            {
+                return Ok(new { success = false, message = "Lỗi kết nối: " + ex.Message });
+            }
         }
 
         // ========================================================
@@ -126,6 +162,8 @@ namespace VinhKhanhFood.API.Controllers
             }
             // else: Giữ nguyên ảnh cũ (existingPoi.ImageUrl)
 
+            // cập nhật thêm QRCodeUrl
+            existingPoi.QRCodeUrl = foodLocation.QRCodeUrl ?? existingPoi.QRCodeUrl;
             try
             {
                 await _context.SaveChangesAsync();

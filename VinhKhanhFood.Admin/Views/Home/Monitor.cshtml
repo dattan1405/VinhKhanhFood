@@ -1,0 +1,247 @@
+﻿@{
+    ViewData["Title"] = "Visitor Location Monitor";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+<div class="container-fluid h-100" style="min-height: 100vh;">
+    <div class="row h-100 m-0 p-0">
+        <!-- Map Container -->
+        <div class="col-md-9 p-0">
+            <div id="map" style="height: 100vh; width: 100%; z-index: 1;"></div>
+        </div>
+
+        <!-- Info Panel -->
+        <div class="col-md-3 p-4 bg-light" style="height: 100vh; overflow-y: auto; background: #f8f9fa;">
+            <h3 class="mb-4">🚀 Live Visitor Monitor</h3>
+            
+            <div class="alert alert-info">
+                <strong>Active Visitors:</strong>
+                <h2 id="visitorCount" class="text-center mt-2">0</h2>
+            </div>
+
+            <!-- Visitor List -->
+            <div id="visitorList" class="list-group">
+                <div class="text-center text-muted py-5">
+                    <p>Chờ dữ liệu từ App...</p>
+                </div>
+            </div>
+
+            <!-- Status -->
+            <div class="mt-4 p-3 bg-white rounded border">
+                <small class="text-muted">
+                    <div>📡 Last Update: <span id="lastUpdate">--:--:--</span></div>
+                    <div>🔄 Polling: 5 giây/lần</div>
+                </small>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Leaflet CSS & JS -->
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+
+<style>
+    #map {
+        border-radius: 8px;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    }
+
+    .visitor-card {
+        border-left: 4px solid #ff6b6b;
+        padding: 12px;
+        margin-bottom: 10px;
+        background: white;
+        border-radius: 6px;
+        cursor: pointer;
+        transition: all 0.3s;
+    }
+
+    .visitor-card:hover {
+        box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+        transform: translateX(2px);
+    }
+
+    .visitor-card.active {
+        border-left-color: #51cf66;
+        background: #f0fdf4;
+    }
+
+    .visitor-marker {
+        background: #ff6b6b;
+        color: white;
+        width: 30px;
+        height: 30px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: bold;
+        box-shadow: 0 2px 8px rgba(255,107,107,0.5);
+        animation: pulse 2s infinite;
+    }
+
+    @@keyframes pulse {
+        0%, 100% { box-shadow: 0 2px 8px rgba(255,107,107,0.5); }
+        50% { box-shadow: 0 2px 16px rgba(255,107,107,0.8); }
+    }
+</style>
+
+<script>
+    let map;
+    let visitorMarkers = {};
+    let poiMarkers = {};
+    let visitorsData = [];
+
+    function initMap() {
+        map = L.map('map').setView([10.7626, 106.7032], 17);
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            attribution: '© OpenStreetMap contributors',
+            maxZoom: 19
+        }).addTo(map);
+    }
+
+    async function loadPOIs() {
+        try {
+            const response = await fetch('/api/food/all');
+            const pois = await response.json();
+            
+            pois.forEach(poi => {
+                if (!poiMarkers[poi.id]) {
+                    const marker = L.circleMarker([poi.latitude, poi.longitude], {
+                        radius: 15,
+                        fillColor: '#064E3B',
+                        color: '#064E3B',
+                        weight: 2,
+                        opacity: 0.8,
+                        fillOpacity: 0.7
+                    }).addTo(map);
+
+                    marker.bindPopup(`
+                        <div style="text-align: center;">
+                            <strong>${poi.name}</strong><br>
+                            📍 ${poi.latitude.toFixed(4)}, ${poi.longitude.toFixed(4)}
+                        </div>
+                    `);
+
+                    poiMarkers[poi.id] = marker;
+                }
+            });
+            console.log('✅ POI loaded:', Object.keys(poiMarkers).length);
+        } catch (error) {
+            console.error('❌ Lỗi load POI:', error);
+        }
+    }
+
+    async function fetchVisitorData() {
+        try {
+            // ✅ Gọi endpoint mới
+            const response = await fetch('/Home/GetVisitorMonitorData');
+            const result = await response.json();
+            
+            console.log('📡 Dữ liệu visitor:', result);
+            
+            visitorsData = result.data || [];
+            updateMap();
+            updateList();
+            updateTimestamp();
+        } catch (error) {
+            console.error('❌ Lỗi fetch data:', error);
+        }
+    }
+
+    function updateMap() {
+        Object.values(visitorMarkers).forEach(m => map.removeLayer(m));
+        visitorMarkers = {};
+
+        visitorsData.forEach((visitor, idx) => {
+            const icon = L.divIcon({
+                html: `<div class="visitor-marker">V${idx + 1}</div>`,
+                iconSize: [30, 30],
+                className: ''
+            });
+
+            const marker = L.marker([visitor.latitude, visitor.longitude], { icon })
+                .addTo(map)
+                .bindPopup(`
+                    <div style="min-width: 280px; font-family: Arial, sans-serif;">
+                        <h5 style="margin: 0 0 10px 0; color: #333;">🚶 Visitor ${idx + 1}</h5>
+                        <hr style="margin: 8px 0; border: none; border-top: 1px solid #ddd;">
+                        <div style="font-size: 13px; line-height: 1.6;">
+                            <div><strong>Device:</strong> ${visitor.id}</div>
+                            <div><strong>Vị trí:</strong> ${visitor.latitude.toFixed(6)}, ${visitor.longitude.toFixed(6)}</div>
+                            <div style="color: #064E3B; font-weight: bold;">
+                                📍 ${visitor.nearestPoiName}
+                            </div>
+                            <div><strong>Khoảng cách:</strong> <span style="color: #ff6b6b; font-weight: bold;">${visitor.distance.toFixed(0)}m</span></div>
+                            <div style="font-size: 11px; color: #666; margin-top: 8px;">
+                                Cập nhật: ${new Date(visitor.lastSeenUtc).toLocaleTimeString('vi-VN')}
+                            </div>
+                        </div>
+                    </div>
+                `);
+
+            visitorMarkers[visitor.id] = marker;
+
+            // Draw line to nearest POI
+            if (visitor.nearestPoiId) {
+                // Tìm POI marker để lấy tọa độ
+                const poiMarker = Object.values(poiMarkers).find(m => m.getLatLng);
+                if (poiMarker) {
+                    L.polyline(
+                        [[visitor.latitude, visitor.longitude], [poiMarker.getLatLng().lat, poiMarker.getLatLng().lng]],
+                        { color: '#ff6b6b', weight: 2, dashArray: '5, 5', opacity: 0.6 }
+                    ).addTo(map);
+                }
+            }
+        });
+
+        if (visitorsData.length > 0) {
+            const bounds = L.latLngBounds(
+                visitorsData.map(v => [v.latitude, v.longitude])
+            );
+            map.fitBounds(bounds, { padding: [50, 50] });
+        }
+    }
+
+    function updateList() {
+        document.getElementById('visitorCount').textContent = visitorsData.length;
+
+        const listHtml = visitorsData.map((visitor, idx) => `
+            <div class="visitor-card" onclick="focusVisitor('${visitor.id}')">
+                <div style="display: flex; justify-content: space-between; align-items: center;">
+                    <div>
+                        <strong>👤 Visitor ${idx + 1}</strong><br>
+                        <small class="text-muted">${visitor.id.substring(0, 20)}...</small>
+                    </div>
+                    <span class="badge bg-danger">${visitor.distance.toFixed(0)}m</span>
+                </div>
+                <div style="margin-top: 8px; font-size: 13px; font-weight: 500; color: #064E3B;">
+                    📍 ${visitor.nearestPoiName}
+                </div>
+            </div>
+        `).join('');
+
+        document.getElementById('visitorList').innerHTML = listHtml || '<div class="text-center text-muted">Chưa có visitor nào</div>';
+    }
+
+    function focusVisitor(visitorId) {
+        if (visitorMarkers[visitorId]) {
+            const marker = visitorMarkers[visitorId];
+            map.setView(marker.getLatLng(), 18);
+            marker.openPopup();
+        }
+    }
+
+    function updateTimestamp() {
+        const now = new Date();
+        document.getElementById('lastUpdate').textContent = now.toLocaleTimeString('vi-VN');
+    }
+
+    window.onload = () => {
+        initMap();
+        loadPOIs();
+        fetchVisitorData();
+        setInterval(fetchVisitorData, 5000);
+    };
+</script>

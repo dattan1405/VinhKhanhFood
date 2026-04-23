@@ -15,7 +15,7 @@ namespace VinhKhanhFood.App.Services
         // 10.0.2.2 địa chỉ để máy ảo Android nhìn thấy máy
         //private const string BaseUrl = "http://10.0.2.2:5020/api/Food";
         //khi dùng máy thật thì dùng địa chỉ IP của máy tính, ví dụ:
-        private const string BaseUrl = "http://10.17.186.213:5020/api/Food";
+        private const string BaseUrl = "http://192.168.130.213:5020/api/Food";
 
         public ApiService()
         {
@@ -51,7 +51,7 @@ namespace VinhKhanhFood.App.Services
                                 // máy ảo
                                 //loc.ImageUrl = $"http://10.0.2.2:5020/images/{loc.ImageUrl}";
                                 // máy thật
-                                loc.ImageUrl = $"http://10.17.186.213:5020/images/{loc.ImageUrl}";
+                                loc.ImageUrl = $"http://192.168.130.213:5020/images/{loc.ImageUrl}";
 
                                 System.Diagnostics.Debug.WriteLine($"    ImageUrl sau xử lý: {loc.ImageUrl}");
                             }
@@ -87,6 +87,46 @@ namespace VinhKhanhFood.App.Services
                 System.Diagnostics.Debug.WriteLine($"   Stack: {ex.StackTrace}");
                 return new List<FoodLocation>();
             }
+        }
+
+        public async Task<bool> UpdateVisitorLocationAsync(double latitude, double longitude)
+        {
+            try
+            {
+                System.Diagnostics.Debug.WriteLine($"📍 Gửi vị trí: {latitude}, {longitude}");
+                
+                string url = $"{BaseUrl.Replace("/api/Food", "")}/api/Visitor/location";
+                var payload = new 
+                { 
+                    Latitude = latitude, 
+                    Longitude = longitude, 
+                    VisitorId = GetDeviceId(),
+                    Timestamp = DateTime.UtcNow
+                };
+
+                var response = await _httpClient.PostAsJsonAsync(url, payload);
+                
+                if (response.IsSuccessStatusCode)
+                {
+                    System.Diagnostics.Debug.WriteLine($"✅ Gửi vị trí thành công");
+                    return true;
+                }
+                else
+                {
+                    System.Diagnostics.Debug.WriteLine($"❌ Gửi vị trí thất bại: {response.StatusCode}");
+                    return false;
+                }
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"❌ Lỗi gửi vị trí: {ex.Message}");
+                return false;
+            }
+        }
+
+        private string GetDeviceId()
+        {
+            return $"{Microsoft.Maui.Devices.DeviceInfo.Current.Platform}_{Microsoft.Maui.Devices.DeviceInfo.Current.Model}_{Microsoft.Maui.Devices.DeviceInfo.Current.Name}";
         }
     }
 }

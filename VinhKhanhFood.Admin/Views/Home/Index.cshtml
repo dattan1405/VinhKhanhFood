@@ -1,15 +1,13 @@
 ﻿@model IEnumerable<VinhKhanhFood.Admin.Models.FoodLocation>
 @{
     ViewData["Title"] = "Dashboard Overview";
-    
-    // ✅ Fix: Handle null model
+
     var locations = Model ?? new List<VinhKhanhFood.Admin.Models.FoodLocation>();
     var recentLocations = locations.Take(5);
-    
-    // ✅ Fix: Tính tỷ lệ chính xác - kiểm tra TẤT CẢ ngôn ngữ
+
     var total = locations.Count();
-    var translated = locations.Count(x => 
-        !string.IsNullOrEmpty(x.Name_EN) || 
+    var translated = locations.Count(x =>
+        !string.IsNullOrEmpty(x.Name_EN) ||
         !string.IsNullOrEmpty(x.Description_EN) ||
         !string.IsNullOrEmpty(x.Name_KO) ||
         !string.IsNullOrEmpty(x.Description_KO) ||
@@ -19,9 +17,8 @@
         !string.IsNullOrEmpty(x.Description_ZH)
     );
     var translationRate = total > 0 ? (translated * 100 / total) : 0;
-    
-    // ✅ Fix: Case-insensitive status check
     var onlineCount = locations.Count(x => x.Status?.ToLower() == "online");
+    var activeDeviceCount = ViewBag.ActiveDeviceCount is int value ? value : 0;
 }
 
 <div class="p-8" style="font-family: 'Manrope', 'Inter', sans-serif">
@@ -32,7 +29,7 @@
         </div>
     </div>
 
-    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-6 mb-8">
         <div class="bg-white p-6 rounded-3xl shadow-sm border border-gray-100 flex justify-between items-start">
             <div>
                 <p class="text-gray-500 text-[10px] font-bold uppercase tracking-widest mb-1">Total POIs</p>
@@ -50,6 +47,16 @@
             </div>
             <div class="w-12 h-12 bg-blue-50 rounded-xl flex items-center justify-center text-blue-600">
                 <i data-lucide="activity" class="w-6 h-6"></i>
+            </div>
+        </div>
+
+        <div class="bg-white p-6 rounded-3xl shadow-sm border border-gray-100 flex justify-between items-start">
+            <div>
+                <p class="text-gray-500 text-[10px] font-bold uppercase tracking-widest mb-1">Active Devices</p>
+                <h3 id="activeDevicesCount" class="text-3xl font-black text-slate-900">@activeDeviceCount</h3>
+            </div>
+            <div class="w-12 h-12 bg-violet-50 rounded-xl flex items-center justify-center text-violet-600">
+                <i data-lucide="smartphone" class="w-6 h-6"></i>
             </div>
         </div>
 
@@ -165,3 +172,35 @@
         </div>
     </div>
 </div>
+
+@section Scripts {
+    <script>
+        async function refreshActiveDevicesCount() {
+            try {
+                const response = await fetch('/Home/ActiveDevicesCount', {
+                    method: 'GET',
+                    cache: 'no-store'
+                });
+
+                if (!response.ok) {
+                    return;
+                }
+
+                const data = await response.json();
+                const countElement = document.getElementById('activeDevicesCount');
+
+                if (countElement && typeof data.count === 'number') {
+                    countElement.textContent = data.count.toString();
+                }
+            } catch (error) {
+                console.error('Refresh active devices failed:', error);
+            }
+        }
+
+        document.addEventListener('DOMContentLoaded', () => {
+            refreshActiveDevicesCount();
+            setInterval(refreshActiveDevicesCount, 2000);
+        });
+    </script>
+}
+

@@ -1,5 +1,5 @@
 ﻿using Microsoft.Maui.ApplicationModel;
-using Microsoft.Maui.ApplicationModel.Communication; // Thư viện để gọi điện thoại
+using Microsoft.Maui.ApplicationModel.Communication;
 using Microsoft.Maui.Media;
 using VinhKhanhFood.App.Models;
 
@@ -8,38 +8,27 @@ namespace VinhKhanhFood.App;
 public partial class DetailPage : ContentPage
 {
     private readonly FoodLocation _currentLocation;
-    private bool _isPlaying = false; // Biến cờ theo dõi trạng thái đang đọc
-    private CancellationTokenSource _cts; // Bộ đếm để hủy đọc ngang chừng
+    private bool _isPlaying = false;
+    private CancellationTokenSource? _cts;
 
     public DetailPage(FoodLocation location)
     {
         InitializeComponent();
-
         _currentLocation = location;
-
-        // Gán dữ liệu để XAML tự động bốc hình ảnh và text lên giao diện
         BindingContext = _currentLocation;
     }
 
-    // Cập nhật lại chữ khi quay lại trang
     protected override void OnAppearing()
     {
         base.OnAppearing();
-
-        // Buộc UI phải tính toán lại DisplayName và DisplayDescription
-        // bằng cách reset lại BindingContext
         BindingContext = null;
         BindingContext = _currentLocation;
     }
 
-    // ==========================================
-    // CÁC NÚT ĐIỀU HƯỚNG VÀ HÀNH ĐỘNG
-    // ==========================================
-
     private async void OnBackButtonClicked(object sender, EventArgs e)
     {
-        // Phải tắt âm thanh trước khi thoát để không bị lỗi tiếng ma đè lên nhau
         StopAudio();
+        await Task.Delay(100);
         await Navigation.PopAsync();
     }
 
@@ -47,9 +36,8 @@ public partial class DetailPage : ContentPage
     {
         try
         {
-            // Bật Google Maps thật trên điện thoại
-            var location = new Location(_currentLocation.Latitude, _currentLocation.Longitude);
-            var options = new MapLaunchOptions { Name = _currentLocation.Name };
+            Location location = new Location(_currentLocation.Latitude, _currentLocation.Longitude);
+            MapLaunchOptions options = new MapLaunchOptions { Name = _currentLocation.Name };
             await Map.Default.OpenAsync(location, options);
         }
         catch (Exception)
@@ -58,39 +46,20 @@ public partial class DetailPage : ContentPage
         }
     }
 
-    // Sự kiện cho nút Gọi Điện Store
-    private void OnCallStoreClicked(object sender, EventArgs e)
-    {
-        if (PhoneDialer.Default.IsSupported)
-        {
-            // Mở app gọi điện của điện thoại và nhập sẵn số
-            PhoneDialer.Default.Open("0904567788");
-        }
-        else
-        {
-            DisplayAlert("Thông báo", "Máy ảo này không hỗ trợ gọi điện.", "OK");
-        }
-    }
-
-    // ==========================================
-    // LOGIC TRÌNH PHÁT ÂM THANH (TEXT TO SPEECH)
-    // ==========================================
-
     private async void OnToggleAudioClicked(object sender, EventArgs e)
     {
         if (_isPlaying)
         {
-            StopAudio(); // Nếu đang đọc thì bấm vào sẽ Tắt
+            StopAudio();
         }
         else
         {
-            await PlayAudio(); // Nếu đang tắt thì bấm vào sẽ Đọc
+            await PlayAudio();
         }
     }
 
     private async Task PlayAudio()
     {
-        // ✅ LẤY ĐÚNG NỘI DUNG DỊCH: Thay vì lấy .Description, hãy lấy .DisplayDescription
         string textToRead = _currentLocation.DisplayDescription;
 
         if (string.IsNullOrWhiteSpace(textToRead))
@@ -107,59 +76,81 @@ public partial class DetailPage : ContentPage
 
         try
         {
-            var locales = await TextToSpeech.Default.GetLocalesAsync();
+            List<Locale> locales = (await TextToSpeech.Default.GetLocalesAsync()).ToList();
 
-            // Dựa trên App.CurrentLanguage để chọn giọng đọc tương ứng
-            var selectedLocale = locales.FirstOrDefault(l => l.Language.StartsWith(App.CurrentLanguage));
+            Locale? selectedLocale = locales.FirstOrDefault(l =>
+                l.Language.StartsWith(App.CurrentLanguage, StringComparison.OrdinalIgnoreCase));
 
-            // Nếu không tìm thấy giọng (ví dụ máy ko cài tiếng Hàn), thì mặc định lấy cái đầu tiên
-            if (selectedLocale == null) selectedLocale = locales.FirstOrDefault(l => l.Language.Contains("vi"));
+            selectedLocale ??= locales.FirstOrDefault(l =>
+                l.Language.StartsWith("vi", StringComparison.OrdinalIgnoreCase));
 
-            var options = new SpeechOptions()
+            selectedLocale ??= locales.FirstOrDefault();
+
+            SpeechOptions options = new SpeechOptions
             {
                 Volume = 1.0f,
-                Locale = selectedLocale //  Áp dụng giọng đọc đúng quốc tịch
+                Locale = selectedLocale
             };
 
-            // Tính toán ProgressBar dựa trên độ dài văn bản thực tế
             int durationMs = textToRead.Length * 80;
             AnimateProgressBar(durationMs, _cts.Token);
 
             await TextToSpeech.Default.SpeakAsync(textToRead, options, cancelToken: _cts.Token);
         }
-        catch (Exception) { /* Xử lý lỗi */ }
-        finally { if (_isPlaying) StopAudio(); }
+        catch (TaskCanceledException)
+        {
+            // user stop
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"TTS error: {ex}");
+            await DisplayAlert("Lỗi phát âm thanh", ex.Message, "OK");
+        }
+        finally
+        {
+            if (_isPlaying)
+            {
+                StopAudio();
+            }
+        }
     }
 
     private void StopAudio()
     {
-        if (!_isPlaying) return;
+        if (!_isPlaying)
+        {
+            return;
+        }
 
-        // Ra lệnh dừng bộ đọc
         _cts?.Cancel();
         _cts?.Dispose();
         _cts = null;
 
-        // Trả UI về trạng thái gốc
         _isPlaying = false;
-        BtnPlayAudio.Text = "▶"; // Trở lại nút Play
+        BtnPlayAudio.Text = "▶";
         LblAudioStatus.Text = "Listen to Introduction";
         AudioProgressBar.Progress = 0;
     }
 
-    // Hàm phụ trợ giúp thanh màu đỏ nhích lên từ từ
     private async void AnimateProgressBar(int totalDurationMs, CancellationToken token)
     {
-        int delay = 100; // Mỗi 0.1 giây cập nhật 1 lần
+        int delay = 100;
         int elapsed = 0;
 
         while (elapsed < totalDurationMs && !token.IsCancellationRequested)
         {
-            await Task.Delay(delay, token);
+            try
+            {
+                await Task.Delay(delay, token);
+            }
+            catch (TaskCanceledException)
+            {
+                break;
+            }
+
             elapsed += delay;
-
             double progress = (double)elapsed / totalDurationMs;
-
+            if (progress < 0)
             MainThread.BeginInvokeOnMainThread(() =>
             {
                 AudioProgressBar.Progress = progress;

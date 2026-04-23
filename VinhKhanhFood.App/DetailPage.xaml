@@ -62,9 +62,8 @@
             </VerticalStackLayout>
         </ScrollView>
 
-        <Grid Grid.Row="1" ColumnDefinitions="*, *" ColumnSpacing="15" Padding="20" BackgroundColor="#121212">
-            <Button Grid.Column="0" Text=" Get Directions" BackgroundColor="#D32F2F" TextColor="White" FontAttributes="Bold" CornerRadius="8" HeightRequest="50" Clicked="OnGetDirectionsClicked"/>
-            <Button Grid.Column="1" Text=" Call Store" BackgroundColor="#2C2C2C" TextColor="White" FontAttributes="Bold" CornerRadius="8" HeightRequest="50" />
+        <Grid Grid.Row="1" ColumnDefinitions="*" ColumnSpacing="15" Padding="20" BackgroundColor="#121212">
+            <Button Grid.Column="0" Text="📍 Get Directions" BackgroundColor="#D32F2F" TextColor="White" FontAttributes="Bold" CornerRadius="8" HeightRequest="50" Clicked="OnGetDirectionsClicked" HorizontalOptions="FillAndExpand"/>
         </Grid>
 
     </Grid>

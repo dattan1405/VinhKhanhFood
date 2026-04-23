@@ -11,5 +11,6 @@ namespace VinhKhanhFood.API.Models
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
         public DateTime? UsedAt { get; set; }
         public string? DeviceId { get; set; }
+        public DateTime? LastSeenUtc { get; set; }
     }
 }

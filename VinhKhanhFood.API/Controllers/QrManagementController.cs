@@ -2,7 +2,6 @@
 using Microsoft.EntityFrameworkCore;
 using VinhKhanhFood.API.Data;
 using VinhKhanhFood.API.Models;
-using System.ComponentModel.DataAnnotations.Schema; 
 
 namespace VinhKhanhFood.API.Controllers
 {
@@ -28,16 +27,26 @@ namespace VinhKhanhFood.API.Controllers
             public string DeviceId { get; set; } = string.Empty;
         }
 
+        public sealed class DeviceHeartbeatRequest
+        {
+            public string DeviceId { get; set; } = string.Empty;
+        }
+
         [HttpPost]
         public async Task<IActionResult> CreateToken([FromBody] CreateQrTokenRequest request)
         {
             if (string.IsNullOrWhiteSpace(request.Token))
+            {
                 return BadRequest("Token không hợp lệ");
+            }
 
             bool exists = await _context.QRManagement.AnyAsync(x => x.Token == request.Token);
-            if (exists) return Conflict("Token đã tồn tại");
+            if (exists)
+            {
+                return Conflict("Token đã tồn tại");
+            }
 
-            var entity = new QrManagement
+            QrManagement entity = new QrManagement
             {
                 Token = request.Token,
                 Status = "Available",
@@ -54,21 +63,76 @@ namespace VinhKhanhFood.API.Controllers
         public async Task<IActionResult> Verify([FromBody] VerifyQrTokenRequest request)
         {
             if (string.IsNullOrWhiteSpace(request.Token) || string.IsNullOrWhiteSpace(request.DeviceId))
+            {
                 return BadRequest("Thiếu token hoặc deviceId");
+            }
 
-            var row = await _context.QRManagement.FirstOrDefaultAsync(x => x.Token == request.Token);
-            if (row == null) return NotFound(new { success = false, message = "Token không tồn tại" });
+            QrManagement? row = await _context.QRManagement.FirstOrDefaultAsync(x => x.Token == request.Token);
+            if (row == null)
+            {
+                return NotFound(new { success = false, message = "Token không tồn tại" });
+            }
 
             if (!string.Equals(row.Status, "Available", StringComparison.OrdinalIgnoreCase))
+            {
                 return Ok(new { success = false, message = "Token đã được sử dụng" });
+            }
 
             row.Status = "Used";
             row.DeviceId = request.DeviceId;
             row.UsedAt = DateTime.UtcNow;
+            row.LastSeenUtc = DateTime.UtcNow;
 
             await _context.SaveChangesAsync();
 
             return Ok(new { success = true });
+        }
+
+        [HttpPost("heartbeat")]
+        public async Task<IActionResult> Heartbeat([FromBody] DeviceHeartbeatRequest request)
+        {
+            if (string.IsNullOrWhiteSpace(request.DeviceId))
+            {
+                return BadRequest("Thiếu deviceId");
+            }
+
+            QrManagement? row = await _context.QRManagement
+                .Where(x => x.Status == "Used" && x.DeviceId == request.DeviceId)
+                .OrderByDescending(x => x.UsedAt ?? x.CreatedAt)
+                .FirstOrDefaultAsync();
+
+            if (row == null)
+            {
+                return NotFound(new { success = false, message = "Thiết bị chưa xác thực QR" });
+            }
+
+            row.LastSeenUtc = DateTime.UtcNow;
+            await _context.SaveChangesAsync();
+
+            return Ok(new { success = true });
+        }
+
+        [HttpGet("active-devices-count")]
+        public async Task<IActionResult> GetActiveDevicesCount([FromQuery] int activeWithinSeconds = 30)
+        {
+            if (activeWithinSeconds <= 0 || activeWithinSeconds > 7200)
+            {
+                return BadRequest("activeWithinSeconds phải từ 1 đến 7200 (2 giờ)");
+            }
+
+            DateTime cutoff = DateTime.UtcNow.AddSeconds(-activeWithinSeconds);
+
+            int count = await _context.QRManagement
+                .Where(x =>
+                    x.Status == "Used" &&
+                    x.DeviceId != null &&
+                    x.LastSeenUtc != null &&
+                    x.LastSeenUtc >= cutoff)
+                .Select(x => x.DeviceId!)
+                .Distinct()
+                .CountAsync();
+
+            return Ok(new { count, activeWithinSeconds });
         }
     }
 }
