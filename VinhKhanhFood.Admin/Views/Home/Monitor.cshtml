@@ -91,6 +91,7 @@
     let map;
     let visitorMarkers = {};
     let poiMarkers = {};
+    let visitorLines = [];
     let visitorsData = [];
 
     function initMap() {
@@ -101,11 +102,19 @@
         }).addTo(map);
     }
 
+    function clearVisitorLayers() {
+        Object.values(visitorMarkers).forEach(marker => map.removeLayer(marker));
+        visitorMarkers = {};
+
+        visitorLines.forEach(line => map.removeLayer(line));
+        visitorLines = [];
+    }
+
     async function loadPOIs() {
         try {
             const response = await fetch('/api/food/all');
             const pois = await response.json();
-            
+
             pois.forEach(poi => {
                 if (!poiMarkers[poi.id]) {
                     const marker = L.circleMarker([poi.latitude, poi.longitude], {
@@ -127,6 +136,7 @@
                     poiMarkers[poi.id] = marker;
                 }
             });
+
             console.log('✅ POI loaded:', Object.keys(poiMarkers).length);
         } catch (error) {
             console.error('❌ Lỗi load POI:', error);
@@ -135,12 +145,9 @@
 
     async function fetchVisitorData() {
         try {
-            // ✅ Gọi endpoint mới
             const response = await fetch('/Home/GetVisitorMonitorData');
             const result = await response.json();
-            
-            console.log('📡 Dữ liệu visitor:', result);
-            
+
             visitorsData = result.data || [];
             updateMap();
             updateList();
@@ -150,13 +157,28 @@
         }
     }
 
+    function addLine(fromLatLng, toLatLng, color) {
+        const line = L.polyline([fromLatLng, toLatLng], {
+            color: color,
+            weight: 2,
+            dashArray: '5, 5',
+            opacity: 0.7
+        }).addTo(map);
+
+        visitorLines.push(line);
+    }
+
     function updateMap() {
-        Object.values(visitorMarkers).forEach(m => map.removeLayer(m));
-        visitorMarkers = {};
+        clearVisitorLayers();
 
         visitorsData.forEach((visitor, idx) => {
+            const isBetweenPois = visitor.isBetweenPois === true;
+            const badgeText = isBetweenPois
+                ? 'Giữa 2 POI'
+                : `${Math.round(visitor.distance ?? 0)}m`;
+
             const icon = L.divIcon({
-                html: `<div class="visitor-marker">V${idx + 1}</div>`,
+                html: `<div class="visitor-marker">${idx + 1}</div>`,
                 iconSize: [30, 30],
                 className: ''
             });
@@ -170,10 +192,12 @@
                         <div style="font-size: 13px; line-height: 1.6;">
                             <div><strong>Device:</strong> ${visitor.id}</div>
                             <div><strong>Vị trí:</strong> ${visitor.latitude.toFixed(6)}, ${visitor.longitude.toFixed(6)}</div>
-                            <div style="color: #064E3B; font-weight: bold;">
-                                📍 ${visitor.nearestPoiName}
+                            <div style="color: ${isBetweenPois ? '#f59f00' : '#064E3B'}; font-weight: bold;">
+                                ${isBetweenPois ? '🟡 ' + (visitor.corridorLabel || 'Đang đứng giữa 2 POI') : '📍 ' + visitor.nearestPoiName}
                             </div>
-                            <div><strong>Khoảng cách:</strong> <span style="color: #ff6b6b; font-weight: bold;">${visitor.distance.toFixed(0)}m</span></div>
+                            <div><strong>Khoảng cách POI 1:</strong> <span style="color: #ff6b6b; font-weight: bold;">${Math.round(visitor.distance ?? 0)}m</span></div>
+                            ${visitor.secondaryPoiName ? `<div><strong>POI 2:</strong> ${visitor.secondaryPoiName}</div>` : ''}
+                            ${visitor.secondaryDistance != null ? `<div><strong>Khoảng cách POI 2:</strong> ${Math.round(visitor.secondaryDistance)}m</div>` : ''}
                             <div style="font-size: 11px; color: #666; margin-top: 8px;">
                                 Cập nhật: ${new Date(visitor.lastSeenUtc).toLocaleTimeString('vi-VN')}
                             </div>
@@ -183,16 +207,23 @@
 
             visitorMarkers[visitor.id] = marker;
 
-            // Draw line to nearest POI
-            if (visitor.nearestPoiId) {
-                // Tìm POI marker để lấy tọa độ
-                const poiMarker = Object.values(poiMarkers).find(m => m.getLatLng);
-                if (poiMarker) {
-                    L.polyline(
-                        [[visitor.latitude, visitor.longitude], [poiMarker.getLatLng().lat, poiMarker.getLatLng().lng]],
-                        { color: '#ff6b6b', weight: 2, dashArray: '5, 5', opacity: 0.6 }
-                    ).addTo(map);
-                }
+            const primaryPoiMarker = visitor.nearestPoiId ? poiMarkers[visitor.nearestPoiId] : null;
+            const secondaryPoiMarker = visitor.secondaryPoiId ? poiMarkers[visitor.secondaryPoiId] : null;
+
+            if (primaryPoiMarker) {
+                addLine(
+                    [visitor.latitude, visitor.longitude],
+                    [primaryPoiMarker.getLatLng().lat, primaryPoiMarker.getLatLng().lng],
+                    '#ff6b6b'
+                );
+            }
+
+            if (isBetweenPois && secondaryPoiMarker) {
+                addLine(
+                    [visitor.latitude, visitor.longitude],
+                    [secondaryPoiMarker.getLatLng().lat, secondaryPoiMarker.getLatLng().lng],
+                    '#f59f00'
+                );
             }
         });
 
@@ -207,22 +238,31 @@
     function updateList() {
         document.getElementById('visitorCount').textContent = visitorsData.length;
 
-        const listHtml = visitorsData.map((visitor, idx) => `
-            <div class="visitor-card" onclick="focusVisitor('${visitor.id}')">
-                <div style="display: flex; justify-content: space-between; align-items: center;">
-                    <div>
-                        <strong>👤 Visitor ${idx + 1}</strong><br>
-                        <small class="text-muted">${visitor.id.substring(0, 20)}...</small>
-                    </div>
-                    <span class="badge bg-danger">${visitor.distance.toFixed(0)}m</span>
-                </div>
-                <div style="margin-top: 8px; font-size: 13px; font-weight: 500; color: #064E3B;">
-                    📍 ${visitor.nearestPoiName}
-                </div>
-            </div>
-        `).join('');
+        const listHtml = visitorsData.map((visitor, idx) => {
+            const isBetweenPois = visitor.isBetweenPois === true;
+            const statusBadge = isBetweenPois
+                ? `<span class="badge bg-warning text-dark">Giữa 2 POI</span>`
+                : `<span class="badge bg-danger">${Math.round(visitor.distance ?? 0)}m</span>`;
 
-        document.getElementById('visitorList').innerHTML = listHtml || '<div class="text-center text-muted">Chưa có visitor nào</div>';
+            return `
+                <div class="visitor-card" onclick="focusVisitor('${visitor.id}')">
+                    <div style="display: flex; justify-content: space-between; align-items: center;">
+                        <div>
+                            <strong>👤 Visitor ${idx + 1}</strong><br>
+                            <small class="text-muted">${visitor.id.substring(0, 20)}...</small>
+                        </div>
+                        ${statusBadge}
+                    </div>
+                    <div style="margin-top: 8px; font-size: 13px; font-weight: 500; color: ${isBetweenPois ? '#f59f00' : '#064E3B'};">
+                        ${isBetweenPois ? `🟡 ${visitor.corridorLabel || 'Đang đứng giữa 2 POI'}` : `📍 ${visitor.nearestPoiName}`}
+                    </div>
+                    ${visitor.secondaryPoiName ? `<div style="margin-top:4px;font-size:12px;color:#666;">POI 2: ${visitor.secondaryPoiName}</div>` : ''}
+                </div>
+            `;
+        }).join('');
+
+        document.getElementById('visitorList').innerHTML =
+            listHtml || '<div class="text-center text-muted">Chưa có visitor nào</div>';
     }
 
     function focusVisitor(visitorId) {
