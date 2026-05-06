@@ -126,7 +126,7 @@ namespace VinhKhanhFood.App.Services
 
         private string GetDeviceId()
         {
-            return $"{Microsoft.Maui.Devices.DeviceInfo.Current.Platform}_{Microsoft.Maui.Devices.DeviceInfo.Current.Model}_{Microsoft.Maui.Devices.DeviceInfo.Current.Name}";
+            return DeviceIdProvider.GetDeviceId();
         }
     }
 }

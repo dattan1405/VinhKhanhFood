@@ -1,4 +1,5 @@
 ﻿using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Logging;
 using Microsoft.EntityFrameworkCore;
 using VinhKhanhFood.API.Data;
 using VinhKhanhFood.API.Models;
@@ -10,10 +11,12 @@ namespace VinhKhanhFood.API.Controllers
     public class QrManagementController : ControllerBase
     {
         private readonly AppDbContext _context;
+        private readonly ILogger<QrManagementController> _logger;
 
-        public QrManagementController(AppDbContext context)
+        public QrManagementController(AppDbContext context, ILogger<QrManagementController> logger)
         {
             _context = context;
+            _logger = logger;
         }
 
         public sealed class CreateQrTokenRequest
@@ -67,6 +70,8 @@ namespace VinhKhanhFood.API.Controllers
                 return BadRequest("Thiếu token hoặc deviceId");
             }
 
+            _logger.LogInformation("Verify request: Token={Token} DeviceId={DeviceId}", request.Token, request.DeviceId);
+
             QrManagement? row = await _context.QRManagement.FirstOrDefaultAsync(x => x.Token == request.Token);
             if (row == null)
             {
@@ -95,6 +100,8 @@ namespace VinhKhanhFood.API.Controllers
             {
                 return BadRequest("Thiếu deviceId");
             }
+
+            _logger.LogInformation("Heartbeat request: DeviceId={DeviceId}", request.DeviceId);
 
             QrManagement? row = await _context.QRManagement
                 .Where(x => x.Status == "Used" && x.DeviceId == request.DeviceId)
@@ -133,6 +140,19 @@ namespace VinhKhanhFood.API.Controllers
                 .CountAsync();
 
             return Ok(new { count, activeWithinSeconds });
+        }
+
+        // Debug endpoint to list used QR entries and their device info (for troubleshooting)
+        [HttpGet("debug-used")]
+        public async Task<IActionResult> GetUsedDevicesDebug()
+        {
+            var rows = await _context.QRManagement
+                .Where(x => x.Status == "Used")
+                .OrderByDescending(x => x.UsedAt ?? x.CreatedAt)
+                .Select(x => new { x.Token, x.DeviceId, x.UsedAt, x.LastSeenUtc })
+                .ToListAsync();
+
+            return Ok(new { count = rows.Count, items = rows });
         }
     }
 }

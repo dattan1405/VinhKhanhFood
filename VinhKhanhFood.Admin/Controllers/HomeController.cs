@@ -67,7 +67,7 @@ namespace VinhKhanhFood.Admin.Controllers
 
         private async Task<int> GetActiveDeviceCountInternalAsync()
         {
-            HttpResponseMessage activeResponse = await _client.GetAsync($"{ApiBaseUrl}/api/QrManagement/active-devices-count?activeWithinSeconds=15");
+            HttpResponseMessage activeResponse = await _client.GetAsync($"{ApiBaseUrl}/api/QrManagement/active-devices-count?activeWithinSeconds=35");
             if (!activeResponse.IsSuccessStatusCode)
             {
                 return 0;

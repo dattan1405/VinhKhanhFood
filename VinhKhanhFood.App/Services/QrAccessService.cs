@@ -5,7 +5,7 @@ namespace VinhKhanhFood.App.Services
     public class QrAccessService
     {
         //máy thật
-        private const string ApiBaseUrl = "http://192.168.130.213:5020";
+        private const string ApiBaseUrl = "http://192.168.1.6:5020";
         //máy ảo
         //private const string ApiBaseUrl = "http://10.0.2.2:5020";
 
@@ -16,7 +16,7 @@ namespace VinhKhanhFood.App.Services
 
         public string GetDeviceId()
         {
-            return $"{Microsoft.Maui.Devices.DeviceInfo.Current.Platform}_{Microsoft.Maui.Devices.DeviceInfo.Current.Model}_{Microsoft.Maui.Devices.DeviceInfo.Current.Name}";
+            return DeviceIdProvider.GetDeviceId();
         }
 
         public async Task<bool> VerifyAppAccess(string token)

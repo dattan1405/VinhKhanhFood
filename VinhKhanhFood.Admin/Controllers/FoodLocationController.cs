@@ -54,7 +54,7 @@ namespace VinhKhanhFood.Admin.Controllers
                     content.Add(streamContent, "ImageFile", model.ImageFile.FileName);
                 }
 
-                var response = await client.PostAsync("http://192.168.130.213:5020/api/Food", content);
+                var response = await client.PostAsync("http://192.168.1.6:5020/api/Food", content);
 
                 if (response.IsSuccessStatusCode)
                 {

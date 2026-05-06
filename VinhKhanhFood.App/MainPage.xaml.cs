@@ -61,6 +61,7 @@ public partial class MainPage : ContentPage
                         bool ok = await _qrService.VerifyAppAccess(token);
                         if (ok)
                         {
+                            await _qrService.SendHeartbeatAsync();
                             await DisplayAlert("✅ Xác thực thành công", "Chào mừng bạn!", "OK");
                         }
                         else
