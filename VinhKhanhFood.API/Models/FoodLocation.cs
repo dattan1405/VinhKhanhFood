@@ -38,8 +38,6 @@ namespace VinhKhanhFood.API.Models
 
         // Thông tin quản lý (Phân quyền Vendor)
         public int? OwnerId { get; set; }
-
-        public string? QRCodeUrl { get; set; }
         [NotMapped]
         public IFormFile? ImageFile { get; set; }
     }

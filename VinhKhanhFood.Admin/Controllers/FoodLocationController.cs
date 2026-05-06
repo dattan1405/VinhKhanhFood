@@ -10,7 +10,7 @@ namespace VinhKhanhFood.Admin.Controllers
     {
         private readonly IHttpClientFactory _httpClientFactory;
         private const string ApiBaseUrl = "http://localhost:5020";
-        private const string PublicBaseUrl = "http://localhost:7065";
+        //private const string PublicBaseUrl = "http://localhost:7065";
 
         public FoodLocationController(IHttpClientFactory httpClientFactory)
         {
@@ -66,17 +66,7 @@ namespace VinhKhanhFood.Admin.Controllers
                         return Json(new { success = false, message = "API không trả về ID hợp lệ." });
                     }
 
-                    // Bước 2: Tạo link QR dựa trên ID vừa tạo
-                    string publicUrl = $"http://192.168.130.213:7065/PublicPOI/Details/{createdPoi.Id}";
-                    createdPoi.QRCodeUrl = publicUrl;
-
-                    // Bước 3: Cập nhật ngược lại QRCodeUrl
-                    var updateJson = JsonConvert.SerializeObject(createdPoi);
-                    var updateContent = new StringContent(updateJson, Encoding.UTF8, "application/json");
-
-                    await client.PutAsync($"http://192.168.130.213:5020/api/Food/{createdPoi.Id}", updateContent);
-
-                    return Json(new { success = true, message = "Thêm cửa hàng và tạo mã QR thành công!" });
+                    return Json(new { success = true, message = "Thêm cửa hàng thành công!" });
                 }
 
                 return Json(new { success = false, message = "Lỗi khi tạo dữ liệu trên API." });

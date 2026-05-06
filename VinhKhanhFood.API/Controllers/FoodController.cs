@@ -46,7 +46,7 @@ namespace VinhKhanhFood.API.Controllers
         }
 
         // ========================================================
-        // ✅ 1. SỬA HÀM CREATE ĐỂ NHẬN ẢNH TỪ ADMIN 
+        //  1. SỬA HÀM CREATE ĐỂ NHẬN ẢNH TỪ ADMIN 
         // ========================================================
         [HttpPost]
         public async Task<IActionResult> Create([FromForm] FoodLocation model)
@@ -69,7 +69,7 @@ namespace VinhKhanhFood.API.Controllers
                     content.Add(streamContent, "ImageFile", Path.GetFileName(model.ImageFile.FileName));
                 }
 
-                HttpResponseMessage response = await client.PostAsync("http://192.168.130.213:5020/api/Food", content);
+                HttpResponseMessage response = await client.PostAsync("http://192.168.1.6:5020/api/Food", content);
 
                 if (!response.IsSuccessStatusCode)
                 {
@@ -85,8 +85,6 @@ namespace VinhKhanhFood.API.Controllers
                     return Ok(new { success = false, message = "API không trả về ID hợp lệ." });
                 }
 
-                string publicUrl = $"http://192.168.130.213:7065/PublicPOI/Details/{createdPoi.Id}";
-                createdPoi.QRCodeUrl = publicUrl;
 
                 using MultipartFormDataContent updateContent = new MultipartFormDataContent();
                 updateContent.Add(new StringContent(createdPoi.Name ?? string.Empty), "Name");
@@ -94,10 +92,9 @@ namespace VinhKhanhFood.API.Controllers
                 updateContent.Add(new StringContent(createdPoi.Status ?? "pending"), "Status");
                 updateContent.Add(new StringContent(createdPoi.Latitude.ToString(System.Globalization.CultureInfo.InvariantCulture)), "Latitude");
                 updateContent.Add(new StringContent(createdPoi.Longitude.ToString(System.Globalization.CultureInfo.InvariantCulture)), "Longitude");
-                updateContent.Add(new StringContent(publicUrl), "QRCodeUrl");
 
                 HttpResponseMessage updateRes = await client.PutAsync(
-                    $"http://192.168.1.3:5020/api/Food/{createdPoi.Id}",
+                    $"http://192.168.1.6:5020/api/Food/{createdPoi.Id}",
                     updateContent);
 
                 if (!updateRes.IsSuccessStatusCode)
@@ -106,7 +103,7 @@ namespace VinhKhanhFood.API.Controllers
                     return Ok(new { success = false, message = $"Lỗi update QR: {updateErr}" });
                 }
 
-                return Ok(new { success = true, message = "Thêm cửa hàng và tạo mã QR thành công!" });
+                return Ok(new { success = true, message = "Thêm POI thành công!" });
             }
             catch (Exception ex)
             {
@@ -115,7 +112,7 @@ namespace VinhKhanhFood.API.Controllers
         }
 
         // ========================================================
-        // ✅ 2. SỬA HÀM UPDATE ĐỂ SỬA ẢNH (Từ Edit modal Admin)
+        //  2. SỬA HÀM UPDATE ĐỂ SỬA ẢNH (Từ Edit modal Admin)
         // ========================================================
         [HttpPut("{id}")]
         public async Task<IActionResult> PutFoodLocation(int id, [FromForm] FoodLocation foodLocation, IFormFile? ImageFile)
@@ -132,7 +129,7 @@ namespace VinhKhanhFood.API.Controllers
             existingPoi.Name_JA = foodLocation.Name_JA ?? existingPoi.Name_JA;
             existingPoi.Name_ZH = foodLocation.Name_ZH ?? existingPoi.Name_ZH;
 
-            // ✅ THÊM: update mô tả đa ngôn ngữ
+            // update mô tả đa ngôn ngữ
             existingPoi.Description_EN = foodLocation.Description_EN ?? existingPoi.Description_EN;
             existingPoi.Description_KO = foodLocation.Description_KO ?? existingPoi.Description_KO;
             existingPoi.Description_JA = foodLocation.Description_JA ?? existingPoi.Description_JA;
@@ -145,7 +142,7 @@ namespace VinhKhanhFood.API.Controllers
             if (double.TryParse(rawLng.Replace(',', '.'), NumberStyles.Any, CultureInfo.InvariantCulture, out var lng))
                 existingPoi.Longitude = lng;
 
-            // Xử lý ảnh (Khá giống Create)
+            // Xử lý ảnh
             if (ImageFile != null && ImageFile.Length > 0)
             {
                 var imageDirectory = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", "images");
@@ -162,8 +159,6 @@ namespace VinhKhanhFood.API.Controllers
             }
             // else: Giữ nguyên ảnh cũ (existingPoi.ImageUrl)
 
-            // cập nhật thêm QRCodeUrl
-            existingPoi.QRCodeUrl = foodLocation.QRCodeUrl ?? existingPoi.QRCodeUrl;
             try
             {
                 await _context.SaveChangesAsync();
