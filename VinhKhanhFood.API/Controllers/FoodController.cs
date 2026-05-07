@@ -69,7 +69,7 @@ namespace VinhKhanhFood.API.Controllers
                     content.Add(streamContent, "ImageFile", Path.GetFileName(model.ImageFile.FileName));
                 }
 
-                HttpResponseMessage response = await client.PostAsync("http://192.168.1.6:5020/api/Food", content);
+                HttpResponseMessage response = await client.PostAsync("http://192.168.31.26:5020/api/Food", content);
 
                 if (!response.IsSuccessStatusCode)
                 {
@@ -94,7 +94,7 @@ namespace VinhKhanhFood.API.Controllers
                 updateContent.Add(new StringContent(createdPoi.Longitude.ToString(System.Globalization.CultureInfo.InvariantCulture)), "Longitude");
 
                 HttpResponseMessage updateRes = await client.PutAsync(
-                    $"http://192.168.1.6:5020/api/Food/{createdPoi.Id}",
+                    $"http://192.168.31.26:5020/api/Food/{createdPoi.Id}",
                     updateContent);
 
                 if (!updateRes.IsSuccessStatusCode)

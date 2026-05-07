@@ -227,7 +227,7 @@
         async function handleGenerateAppQR() {
             const token = crypto.randomUUID();
             try {
-                const res = await fetch('http://192.168.1.6:5020/api/QrManagement', {
+                const res = await fetch('http://192.168.31.26:5020/api/QrManagement', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ token: token })
@@ -240,7 +240,7 @@
                     const container = document.getElementById('qrcodeDisplay');
                     container.innerHTML = '';
                     new QRCode(container, {
-                        text: `http://192.168.1.6:5020/qr/launch?token=${token}`,
+                        text: `http://192.168.31.26:5020/qr/launch?token=${token}`,
                         width: 220,
                         height: 220,
                         colorDark: '#064E3B'

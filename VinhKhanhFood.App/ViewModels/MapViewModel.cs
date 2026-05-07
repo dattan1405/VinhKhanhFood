@@ -1,6 +1,8 @@
 ﻿using Microsoft.Maui.Devices.Sensors;
 using VinhKhanhFood.App.Models;
 using VinhKhanhFood.App.Services;
+using System.Text.Json;
+using System.Net.Http.Json;
 
 namespace VinhKhanhFood.App.ViewModels;
 
@@ -13,6 +15,7 @@ public class MapViewModel
 
     private bool _isTrackingLocation = false;
     private HashSet<int> _readLocationIds = new();
+    private HashSet<string> _readBetweenPoiCorridors = new(); // Track "between" states
     private CancellationTokenSource? _cts;
     private CancellationTokenSource? _speechCts;
 
@@ -65,7 +68,7 @@ public class MapViewModel
             _isTrackingLocation = true;
             _cts = new CancellationTokenSource();
 
-            Device.StartTimer(TimeSpan.FromSeconds(3), () =>
+            Device.StartTimer(TimeSpan.FromSeconds(5), () =>
             {
                 if (!_isTrackingLocation || _cts?.IsCancellationRequested == true)
                     return false;
@@ -82,9 +85,95 @@ public class MapViewModel
         try
         {
             var location = await Geolocation.Default.GetLocationAsync();
-            if (location != null) CheckGeofence(location);
+            if (location != null)
+            {
+                // 1. Check geofence local
+                CheckGeofence(location);
+
+                // 2. Send location to server (new)
+                await UpdateLocationToServerAsync(location);
+            }
         }
         catch { }
+    }
+
+    private async Task UpdateLocationToServerAsync(Location userLocation)
+    {
+        try
+        {
+            bool success = await _apiService.UpdateVisitorLocationAsync(userLocation.Latitude, userLocation.Longitude);
+            if (!success)
+                return;
+
+            // Parse response nếu có (tùy API trả về)
+            // Để đơn giản, gọi endpoint detail để check isBetweenPois
+            var response = await GetVisitorPoiStatusAsync(userLocation.Latitude, userLocation.Longitude);
+            if (response != null && response.IsBetweenPois)
+            {
+                HandleBetweenPoiStatus(response);
+            }
+        }
+        catch { }
+    }
+
+    private async Task<PoiStatusResponse?> GetVisitorPoiStatusAsync(double latitude, double longitude)
+    {
+        try
+        {
+            string url = $"{_apiService.GetBaseUrl().Replace("/api/Food", "")}/api/Visitor/location";
+            var payload = new
+            {
+                VisitorId = DeviceIdProvider.GetDeviceId(),
+                Latitude = latitude,
+                Longitude = longitude,
+                Timestamp = DateTime.UtcNow
+            };
+
+            using (var client = new HttpClient())
+            {
+                var response = await client.PostAsJsonAsync(url, payload);
+                if (response.IsSuccessStatusCode)
+                {
+                    var content = await response.Content.ReadAsStringAsync();
+                    using (JsonDocument doc = JsonDocument.Parse(content))
+                    {
+                        var root = doc.RootElement;
+                        return new PoiStatusResponse
+                        {
+                            IsBetweenPois = root.GetProperty("isBetweenPois").GetBoolean(),
+                            CorridorLabel = root.TryGetProperty("corridorLabel", out var corridor)
+                                ? corridor.GetString()
+                                : null,
+                            NearestPoiName = root.TryGetProperty("nearestPoi", out var poi)
+                                ? poi.GetString()
+                                : "Unknown"
+                        };
+                    }
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"Error getting POI status: {ex}");
+        }
+
+        return null;
+    }
+
+    private void HandleBetweenPoiStatus(PoiStatusResponse status)
+    {
+        // Avoid repeating same corridor announcement
+        if (_readBetweenPoiCorridors.Contains(status.CorridorLabel ?? ""))
+            return;
+
+        _readBetweenPoiCorridors.Add(status.CorridorLabel ?? "");
+
+        string message = $"Bạn đang đứng giữa {status.CorridorLabel}";
+
+        _speechCts?.Cancel();
+        _speechCts = new CancellationTokenSource();
+
+        TextToSpeech.Default.SpeakAsync(message);
     }
 
     private void CheckGeofence(Location userLocation)
@@ -130,11 +219,19 @@ public class MapViewModel
     public async Task PlayGeneralIntroAsync()
     {
         _readLocationIds.Clear();
+        _readBetweenPoiCorridors.Clear();
         await TextToSpeech.Default.SpeakAsync("Chế độ hướng dẫn viên tự động đã bật. Hãy bắt đầu đi dạo phố Vĩnh Khánh nào!");
     }
 
     public void CancelSpeech()
     {
         _speechCts?.Cancel();
+    }
+
+    private class PoiStatusResponse
+    {
+        public bool IsBetweenPois { get; set; }
+        public string? CorridorLabel { get; set; }
+        public string NearestPoiName { get; set; } = string.Empty;
     }
 }

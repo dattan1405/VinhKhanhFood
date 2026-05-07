@@ -15,7 +15,7 @@ namespace VinhKhanhFood.App.Services
         // 10.0.2.2 địa chỉ để máy ảo Android nhìn thấy máy
         //private const string BaseUrl = "http://10.0.2.2:5020/api/Food";
         //khi dùng máy thật thì dùng địa chỉ IP của máy tính, ví dụ:
-        private const string BaseUrl = "http://192.168.1.6:5020/api/Food";
+        private const string BaseUrl = "http://192.168.31.26:5020/api/Food";
 
         public ApiService()
         {
@@ -51,7 +51,7 @@ namespace VinhKhanhFood.App.Services
                                 // máy ảo
                                 //loc.ImageUrl = $"http://10.0.2.2:5020/images/{loc.ImageUrl}";
                                 // máy thật
-                                loc.ImageUrl = $"http://192.168.1.6:5020/images/{loc.ImageUrl}";
+                                loc.ImageUrl = $"http://192.168.31.26:5020/images/{loc.ImageUrl}";
 
                                 System.Diagnostics.Debug.WriteLine($"    ImageUrl sau xử lý: {loc.ImageUrl}");
                             }
@@ -124,9 +124,76 @@ namespace VinhKhanhFood.App.Services
             }
         }
 
+        public async Task<PlayAudioQueueResponse?> PlayAudioWithQueueAsync(int poiId, string audioText, string clientId)
+        {
+            try
+            {
+                string url = $"{BaseUrl.Replace("/api/Food", "")}/api/AudioQueue/play-with-queue";
+                var payload = new
+                {
+                    ClientId = clientId,
+                    PoiId = poiId,
+                    AudioText = audioText
+                };
+
+                var response = await _httpClient.PostAsJsonAsync(url, payload);
+
+                if (response.IsSuccessStatusCode)
+                {
+                    var result = await response.Content.ReadFromJsonAsync<PlayAudioQueueResponse>();
+                    System.Diagnostics.Debug.WriteLine($"✅ Audio queued: {result?.RequestId}");
+                    return result;
+                }
+                else
+                {
+                    System.Diagnostics.Debug.WriteLine($"❌ Queue audio failed: {response.StatusCode}");
+                    return null;
+                }
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"❌ Error queuing audio: {ex.Message}");
+                return null;
+            }
+        }
+
+        public async Task<bool> CancelAudioAsync(string requestId, int poiId)
+        {
+            try
+            {
+                string url = $"{BaseUrl.Replace("/api/Food", "")}/api/AudioQueue/cancel-audio";
+                var payload = new
+                {
+                    RequestId = requestId,
+                    PoiId = poiId
+                };
+
+                var response = await _httpClient.PostAsJsonAsync(url, payload);
+                return response.IsSuccessStatusCode;
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"❌ Error cancelling audio: {ex.Message}");
+                return false;
+            }
+        }
+
+        public class PlayAudioQueueResponse
+        {
+            public string RequestId { get; set; } = string.Empty;
+            public string Status { get; set; } = string.Empty; // "playing" or "queued"
+            public int Position { get; set; }
+            public string Message { get; set; } = string.Empty;
+        }
+
         private string GetDeviceId()
         {
             return DeviceIdProvider.GetDeviceId();
+        }
+
+        public string GetBaseUrl()
+        {
+            return BaseUrl;
         }
     }
 }

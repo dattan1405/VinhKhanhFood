@@ -9,6 +9,7 @@ public partial class DetailPage : ContentPage
 {
     private readonly FoodLocation _currentLocation;
     private bool _isPlaying = false;
+    private string? _currentRequestId = null;
     private CancellationTokenSource? _cts;
 
     public DetailPage(FoodLocation location)
@@ -50,15 +51,15 @@ public partial class DetailPage : ContentPage
     {
         if (_isPlaying)
         {
-            StopAudio();
+            await StopAudioAsync();
         }
         else
         {
-            await PlayAudio();
+            await PlayAudioAsync();
         }
     }
 
-    private async Task PlayAudio()
+    private async Task PlayAudioAsync()
     {
         string textToRead = _currentLocation.DisplayDescription;
 
@@ -70,10 +71,70 @@ public partial class DetailPage : ContentPage
 
         _isPlaying = true;
         BtnPlayAudio.Text = "■";
-        LblAudioStatus.Text = "Reading Guide...";
+        LblAudioStatus.Text = "Joining queue...";
 
         _cts = new CancellationTokenSource();
 
+        try
+        {
+            // Step 1: Enqueue with server
+            var apiService = new VinhKhanhFood.App.Services.ApiService();
+            var deviceId = VinhKhanhFood.App.Services.DeviceIdProvider.GetDeviceId();
+            
+            var queueResponse = await apiService.PlayAudioWithQueueAsync(
+                _currentLocation.Id,
+                textToRead,
+                deviceId
+            );
+
+            if (queueResponse == null)
+            {
+                await DisplayAlert("Lỗi", "Không thể kết nối tới queue server", "OK");
+                StopAudio();
+                return;
+            }
+
+            _currentRequestId = queueResponse.RequestId;
+
+            if (queueResponse.Status == "queued")
+            {
+                LblAudioStatus.Text = $"Position in queue: {queueResponse.Position}";
+                // Mở SignalR listener để chờ "start" notification
+                await WaitForAudioStartAsync();
+            }
+            else if (queueResponse.Status == "playing")
+            {
+                await PlayLocalAudioAsync(textToRead);
+            }
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"Error: {ex}");
+            await DisplayAlert("Lỗi", "Lỗi phát âm thanh: " + ex.Message, "OK");
+            StopAudio();
+        }
+    }
+
+    private async Task WaitForAudioStartAsync()
+    {
+        // Chờ tối đa 30 giây, hoặc cho đến khi nhận signal "start" từ server
+        int waitCount = 0;
+        while (_isPlaying && waitCount < 300) // 30 giây x 100ms
+        {
+            await Task.Delay(100);
+            waitCount++;
+        }
+
+        // Nếu vượt quá thời gian chờ mà chưa nhận start → timeout
+        if (_isPlaying && waitCount >= 300)
+        {
+            await DisplayAlert("Timeout", "Quá lâu chờ turn, hủy queue", "OK");
+            await StopAudioAsync();
+        }
+    }
+
+    private async Task PlayLocalAudioAsync(string textToRead)
+    {
         try
         {
             List<Locale> locales = (await TextToSpeech.Default.GetLocalesAsync()).ToList();
@@ -91,6 +152,8 @@ public partial class DetailPage : ContentPage
                 Volume = 1.0f,
                 Locale = selectedLocale
             };
+
+            LblAudioStatus.Text = "Reading Guide...";
 
             int durationMs = textToRead.Length * 80;
             AnimateProgressBar(durationMs, _cts.Token);
@@ -110,7 +173,7 @@ public partial class DetailPage : ContentPage
         {
             if (_isPlaying)
             {
-                StopAudio();
+                await StopAudioAsync();
             }
         }
     }
@@ -126,10 +189,32 @@ public partial class DetailPage : ContentPage
         _cts?.Dispose();
         _cts = null;
 
+        // Cancel queue nếu có
+        if (!string.IsNullOrEmpty(_currentRequestId))
+        {
+            _ = CancelQueueAsync();
+        }
+
         _isPlaying = false;
         BtnPlayAudio.Text = "▶";
         LblAudioStatus.Text = "Listen to Introduction";
         AudioProgressBar.Progress = 0;
+    }
+
+    private async Task StopAudioAsync()
+    {
+        StopAudio();
+        await Task.CompletedTask;
+    }
+
+    private async Task CancelQueueAsync()
+    {
+        try
+        {
+            var apiService = new VinhKhanhFood.App.Services.ApiService();
+            await apiService.CancelAudioAsync(_currentRequestId, _currentLocation.Id);
+        }
+        catch { }
     }
 
     private async void AnimateProgressBar(int totalDurationMs, CancellationToken token)

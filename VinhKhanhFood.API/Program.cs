@@ -1,5 +1,7 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using Scalar.AspNetCore;
+using VinhKhanhFood.API.Hubs;
+using VinhKhanhFood.API.Services;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -15,6 +17,12 @@ builder.Services.AddCors(options =>
 // Đăng ký dịch vụ Database sử dụng Connection String từ file appsettings.json
 builder.Services.AddDbContext<VinhKhanhFood.API.Data.AppDbContext>(options =>
     options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
+
+// Đăng ký AudioQueueService
+builder.Services.AddSingleton<AudioQueueService>();
+
+// Đăng ký SignalR
+builder.Services.AddSignalR();
 
 builder.Services.AddControllers();
 builder.Services.AddRazorPages(); // ✅ THÊM DÒNG NÀY
@@ -38,6 +46,8 @@ app.UseAuthorization();
 app.MapControllers();
 app.MapRazorPages(); // ✅ THÊM DÒNG NÀY
 
+// Map SignalR Hub
+app.MapHub<AudioQueueHub>("/audioqueuehub");
 
 // REDIRECT: Khi mở web sẽ vào thẳng trang giao diện
 app.MapGet("/", async (context) =>
