@@ -1,4 +1,4 @@
-﻿using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc;
 using Newtonsoft.Json;
 using VinhKhanhFood.Admin.Models;
 using System.Text;
@@ -54,7 +54,7 @@ namespace VinhKhanhFood.Admin.Controllers
                     content.Add(streamContent, "ImageFile", model.ImageFile.FileName);
                 }
 
-                var response = await client.PostAsync("http://192.168.31.26:5020/api/Food", content);
+                var response = await client.PostAsync("http://localhost:5020/api/Food", content);
 
                 if (response.IsSuccessStatusCode)
                 {

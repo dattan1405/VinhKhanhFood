@@ -1,4 +1,4 @@
-﻿using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using VinhKhanhFood.API.Data;
 using VinhKhanhFood.API.Models;
@@ -49,65 +49,34 @@ namespace VinhKhanhFood.API.Controllers
         //  1. SỬA HÀM CREATE ĐỂ NHẬN ẢNH TỪ ADMIN 
         // ========================================================
         [HttpPost]
-        public async Task<IActionResult> Create([FromForm] FoodLocation model)
+        public async Task<ActionResult<FoodLocation>> Create([FromForm] FoodLocation model)
         {
             try
             {
-                var client = _httpClientFactory.CreateClient();
-
-                using MultipartFormDataContent content = new MultipartFormDataContent();
-                content.Add(new StringContent(model.Name ?? string.Empty), "Name");
-                content.Add(new StringContent(model.Description ?? string.Empty), "Description");
-                content.Add(new StringContent(model.Status ?? "pending"), "Status");
-                content.Add(new StringContent(model.Latitude.ToString(System.Globalization.CultureInfo.InvariantCulture)), "Latitude");
-                content.Add(new StringContent(model.Longitude.ToString(System.Globalization.CultureInfo.InvariantCulture)), "Longitude");
-
                 if (model.ImageFile != null && model.ImageFile.Length > 0)
                 {
-                    StreamContent streamContent = new StreamContent(model.ImageFile.OpenReadStream());
-                    streamContent.Headers.ContentType = new MediaTypeHeaderValue(model.ImageFile.ContentType ?? "application/octet-stream");
-                    content.Add(streamContent, "ImageFile", Path.GetFileName(model.ImageFile.FileName));
+                    var imageDirectory = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", "images");
+                    if (!Directory.Exists(imageDirectory)) Directory.CreateDirectory(imageDirectory);
+
+                    var fileName = $"{Guid.NewGuid()}_{Path.GetFileName(model.ImageFile.FileName)}";
+                    var filePath = Path.Combine(imageDirectory, fileName);
+                    using (var stream = new FileStream(filePath, FileMode.Create))
+                    {
+                        await model.ImageFile.CopyToAsync(stream);
+                    }
+
+                    model.ImageUrl = fileName;
                 }
 
-                HttpResponseMessage response = await client.PostAsync("http://192.168.31.26:5020/api/Food", content);
+                _context.FoodLocations.Add(model);
+                await _context.SaveChangesAsync();
 
-                if (!response.IsSuccessStatusCode)
-                {
-                    string responseBody = await response.Content.ReadAsStringAsync();
-                    return Ok(new { success = false, message = $"Lỗi khi tạo dữ liệu trên API: {responseBody}" });
-                }
-
-                string createdJson = await response.Content.ReadAsStringAsync();
-                FoodLocation? createdPoi = JsonConvert.DeserializeObject<FoodLocation>(createdJson);
-
-                if (createdPoi == null || createdPoi.Id <= 0)
-                {
-                    return Ok(new { success = false, message = "API không trả về ID hợp lệ." });
-                }
-
-
-                using MultipartFormDataContent updateContent = new MultipartFormDataContent();
-                updateContent.Add(new StringContent(createdPoi.Name ?? string.Empty), "Name");
-                updateContent.Add(new StringContent(createdPoi.Description ?? string.Empty), "Description");
-                updateContent.Add(new StringContent(createdPoi.Status ?? "pending"), "Status");
-                updateContent.Add(new StringContent(createdPoi.Latitude.ToString(System.Globalization.CultureInfo.InvariantCulture)), "Latitude");
-                updateContent.Add(new StringContent(createdPoi.Longitude.ToString(System.Globalization.CultureInfo.InvariantCulture)), "Longitude");
-
-                HttpResponseMessage updateRes = await client.PutAsync(
-                    $"http://192.168.31.26:5020/api/Food/{createdPoi.Id}",
-                    updateContent);
-
-                if (!updateRes.IsSuccessStatusCode)
-                {
-                    string updateErr = await updateRes.Content.ReadAsStringAsync();
-                    return Ok(new { success = false, message = $"Lỗi update QR: {updateErr}" });
-                }
-
-                return Ok(new { success = true, message = "Thêm POI thành công!" });
+                // Trả về đúng object đã tạo (có chứa Id hợp lệ) để Admin app nhận được
+                return CreatedAtAction(nameof(GetFoodLocation), new { id = model.Id }, model);
             }
             catch (Exception ex)
             {
-                return Ok(new { success = false, message = "Lỗi kết nối: " + ex.Message });
+                return BadRequest($"Lỗi: {ex.Message}");
             }
         }
 

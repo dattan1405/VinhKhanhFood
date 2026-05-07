@@ -67,7 +67,7 @@ namespace VinhKhanhFood.Admin.Controllers
 
         private async Task<int> GetActiveDeviceCountInternalAsync()
         {
-            HttpResponseMessage activeResponse = await _client.GetAsync($"{ApiBaseUrl}/api/QrManagement/active-devices-count?activeWithinSeconds=35");
+            HttpResponseMessage activeResponse = await _client.GetAsync($"{ApiBaseUrl}/api/QrManagement/active-devices-count?activeWithinSeconds=45");
             if (!activeResponse.IsSuccessStatusCode)
             {
                 return 0;
@@ -76,8 +76,6 @@ namespace VinhKhanhFood.Admin.Controllers
             string activeJson = await activeResponse.Content.ReadAsStringAsync();
             ActiveDevicesResponse? activeData = JsonConvert.DeserializeObject<ActiveDevicesResponse>(activeJson);
             return (activeData?.Count ?? 0) *1 ;
-            // *2 thiết bị online
-            //return (activeData?.Count ?? 0) * 2;
         }
 
         public IActionResult Privacy()
