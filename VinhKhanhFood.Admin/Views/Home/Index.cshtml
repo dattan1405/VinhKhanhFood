@@ -187,15 +187,25 @@
     </div>
 </div>
 
-<div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
-    <div class="bg-white p-6 rounded-3xl border border-slate-100 shadow-sm">
-        <h3 class="text-lg font-bold text-slate-800 mb-4">Top địa điểm được nghe nhiều nhất</h3>
-        <canvas id="topPoisChart" height="200"></canvas>
+<div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+    <div class="bg-white p-6 rounded-3xl border border-gray-100 shadow-sm flex flex-col">
+        <div class="mb-6">
+            <h3 class="text-lg font-bold text-slate-900">Top POIs is listened to a lot</h3>
+            <p class="text-sm font-medium text-slate-500 mt-1">The most interactive POIs</p>
+        </div>
+        <div class="flex-1 relative" style="min-height: 250px;">
+            <canvas id="topPoisChart"></canvas>
+        </div>
     </div>
 
-    <div class="bg-white p-6 rounded-3xl border border-slate-100 shadow-sm">
-        <h3 class="text-lg font-bold text-slate-800 mb-4">Lượt khách nghe theo ngày</h3>
-        <canvas id="dailyTrendChart" height="200"></canvas>
+    <div class="bg-white p-6 rounded-3xl border border-gray-100 shadow-sm flex flex-col">
+        <div class="mb-6">
+            <h3 class="text-lg font-bold text-slate-900">Daily listening trends</h3>
+            <p class="text-sm font-medium text-slate-500 mt-1">Listening trends in recent times</p>
+        </div>
+        <div class="flex-1 relative" style="min-height: 250px;">
+            <canvas id="dailyTrendChart"></canvas>
+        </div>
     </div>
 </div>
 
@@ -239,33 +249,116 @@
             if (topChartInstance) topChartInstance.destroy();
             if (trendChartInstance) trendChartInstance.destroy();
 
+            // Cài đặt chung cho Chart.js
+            Chart.defaults.font.family = "'Manrope', 'Inter', sans-serif";
+            Chart.defaults.color = '#64748b'; // slate-500
+
+            // Cấu hình Tooltip chuyên nghiệp
+            const tooltipConfig = {
+                backgroundColor: 'rgba(15, 23, 42, 0.9)', // slate-900
+                titleFont: { size: 13, family: "'Manrope', sans-serif", weight: 'bold' },
+                bodyFont: { size: 12, family: "'Manrope', sans-serif" },
+                padding: 12,
+                cornerRadius: 8,
+                displayColors: false,
+                callbacks: {
+                    label: function(context) {
+                        return context.dataset.label + ': ' + context.parsed.y + ' lượt';
+                    }
+                }
+            };
+
+            // Gradient cho biểu đồ Cột (Top POIs)
+            const ctxTop = document.getElementById('topPoisChart').getContext('2d');
+            const gradientTop = ctxTop.createLinearGradient(0, 0, 0, 400);
+            gradientTop.addColorStop(0, '#3b82f6'); // blue-500
+            gradientTop.addColorStop(1, '#8b5cf6'); // violet-500
+
             // Vẽ biểu đồ Cột (Top POIs)
-            topChartInstance = new Chart(document.getElementById('topPoisChart'), {
+            topChartInstance = new Chart(ctxTop, {
                 type: 'bar',
                 data: {
                     labels: data.top.map(x => x.poiName),
                     datasets: [{
                         label: 'Lượt nghe',
                         data: data.top.map(x => x.listenCount),
-                        backgroundColor: '#3b82f6',
-                        borderRadius: 8
+                        backgroundColor: gradientTop,
+                        borderRadius: 6,
+                        borderSkipped: false,
+                        maxBarThickness: 45
                     }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { display: false },
+                        tooltip: tooltipConfig
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            grid: { color: '#f1f5f9', drawBorder: false }, // slate-100
+                            border: { display: false },
+                            ticks: { stepSize: 1, precision: 0 }
+                        },
+                        x: {
+                            grid: { display: false, drawBorder: false },
+                            border: { display: false }
+                        }
+                    }
                 }
             });
 
+            // Gradient cho biểu đồ Đường (Daily Trend)
+            const ctxTrend = document.getElementById('dailyTrendChart').getContext('2d');
+            const gradientTrend = ctxTrend.createLinearGradient(0, 0, 0, 400);
+            gradientTrend.addColorStop(0, 'rgba(16, 185, 129, 0.3)'); // emerald-500
+            gradientTrend.addColorStop(1, 'rgba(16, 185, 129, 0.0)');
+
             // Vẽ biểu đồ Đường (Daily Trend)
-            trendChartInstance = new Chart(document.getElementById('dailyTrendChart'), {
+            trendChartInstance = new Chart(ctxTrend, {
                 type: 'line',
                 data: {
                     labels: data.trend.map(x => x.date),
                     datasets: [{
-                        label: 'Tổng lượt nghe',
+                        label: 'Lượt nghe',
                         data: data.trend.map(x => x.count),
-                        borderColor: '#10b981',
+                        borderColor: '#10b981', // emerald-500
+                        borderWidth: 3,
+                        pointBackgroundColor: '#ffffff',
+                        pointBorderColor: '#10b981',
+                        pointBorderWidth: 2,
+                        pointRadius: 4,
+                        pointHoverRadius: 6,
                         tension: 0.4,
                         fill: true,
-                        backgroundColor: 'rgba(16, 185, 129, 0.1)'
+                        backgroundColor: gradientTrend
                     }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { display: false },
+                        tooltip: tooltipConfig
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            grid: { color: '#f1f5f9', drawBorder: false },
+                            border: { display: false },
+                            ticks: { stepSize: 1, precision: 0 }
+                        },
+                        x: {
+                            grid: { display: false, drawBorder: false },
+                            border: { display: false }
+                        }
+                    },
+                    interaction: {
+                        mode: 'index',
+                        intersect: false,
+                    }
                 }
             });
         }

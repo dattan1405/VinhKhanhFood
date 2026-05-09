@@ -155,13 +155,16 @@ namespace VinhKhanhFood.Admin.Controllers
 
                 if (topRes.IsSuccessStatusCode && trendRes.IsSuccessStatusCode)
                 {
-                    var topData = JsonConvert.DeserializeObject<dynamic>(await topRes.Content.ReadAsStringAsync());
-                    var trendData = JsonConvert.DeserializeObject<dynamic>(await trendRes.Content.ReadAsStringAsync());
+                    string topData = await topRes.Content.ReadAsStringAsync();
+                    string trendData = await trendRes.Content.ReadAsStringAsync();
 
-                    return Json(new { top = topData, trend = trendData });
+                    return Content($"{{\"top\": {topData}, \"trend\": {trendData}}}", "application/json");
                 }
             }
-            catch { }
+            catch (Exception ex)
+            {
+                _logger.LogError($"Lỗi GetAudioAnalytics: {ex.Message}");
+            }
             return BadRequest();
         }
     }
