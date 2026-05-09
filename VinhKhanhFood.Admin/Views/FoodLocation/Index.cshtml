@@ -1,4 +1,4 @@
-﻿@model IEnumerable<VinhKhanhFood.Admin.Models.FoodLocation>
+@model IEnumerable<VinhKhanhFood.Admin.Models.FoodLocation>
 @{
     ViewData["Title"] = "POI Management";
 }
@@ -59,7 +59,7 @@
                                             var imgSrc = !string.IsNullOrEmpty(item.ImageUrl)
                                                 ? (item.ImageUrl.StartsWith("http", StringComparison.OrdinalIgnoreCase)
                                                     ? item.ImageUrl
-                                                    : $"http://localhost:5020/images/{item.ImageUrl}")
+                                                    : $"http://192.168.1.6:5020/images/{item.ImageUrl}")
                                                 : null;
                                         }
                                         @if (!string.IsNullOrEmpty(imgSrc))
@@ -420,7 +420,7 @@
             document.getElementById('fileInput').value = '';
 
             if (image && image.trim() !== '') {
-                const imgSrc = image.startsWith('http') ? image : ('http://localhost:5020/images/' + image);
+                const imgSrc = image.startsWith('http') ? image : ('http://192.168.1.6:5020/images/' + image);
                 document.getElementById('preview-img').src = imgSrc;
                 document.getElementById('preview-img').classList.remove('hidden');
                 document.getElementById('upload-prompt').classList.add('hidden');

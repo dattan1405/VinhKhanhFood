@@ -1,16 +1,16 @@
-var builder = WebApplication.CreateBuilder(args);
+ï»¿var builder = WebApplication.CreateBuilder(args);
 
-// 1. Ðãng k? HttpClient ð? Admin có th? g?i sang API
+// 1. ÄÄƒng k? HttpClient Ä‘? Admin cÃ³ th? g?i sang API
 builder.Services.AddHttpClient("MyAPI", client =>
 {
-    // (nh?n trên tr?nh duy?t lúc ch?y Scalar)
-    client.BaseAddress = new Uri("http://localhost:5020/api/");
+    // (nh?n trÃªn tr?nh duy?t lÃºc ch?y Scalar)
+    client.BaseAddress = new Uri("http://192.168.1.6:5020/api/");
 });
 
-// 2. Thêm Session ð? lýu tr?ng thái ðãng nh?p (ð? bi?t ai là Admin, ai là Vendor)
+// 2. ThÃªm Session Ä‘? lÆ°u tr?ng thÃ¡i Ä‘Äƒng nh?p (Ä‘? bi?t ai lÃ  Admin, ai lÃ  Vendor)
 builder.Services.AddSession(options =>
 {
-    options.IdleTimeout = TimeSpan.FromMinutes(30); // Sau 30p không làm g? s? t? ðãng xu?t
+    options.IdleTimeout = TimeSpan.FromMinutes(30); // Sau 30p khÃ´ng lÃ m g? s? t? Ä‘Äƒng xu?t
     options.Cookie.HttpOnly = true;
     options.Cookie.IsEssential = true;
 });
@@ -31,7 +31,7 @@ if (!app.Environment.IsDevelopment())
 app.UseHttpsRedirection();
 app.UseRouting();
 
-// 3. Kích ho?t Session (ð? TRÝ?C UseAuthorization)
+// 3. KÃ­ch ho?t Session (Ä‘? TRÆ¯?C UseAuthorization)
 app.UseSession();
 
 app.UseAuthorization();

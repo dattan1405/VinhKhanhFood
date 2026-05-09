@@ -3,11 +3,18 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace VinhKhanhFood.API.Services
 {
     public class AudioQueueService
     {
+        private readonly IServiceScopeFactory _scopeFactory;
+
+        public AudioQueueService(IServiceScopeFactory scopeFactory)
+        {
+            _scopeFactory = scopeFactory;
+        }
         private class AudioQueueItem
         {
             public string RequestId { get; set; } = Guid.NewGuid().ToString();
@@ -88,6 +95,9 @@ namespace VinhKhanhFood.API.Services
                 item = _poiQueues[poiId].Dequeue();
                 _currentlyPlaying[poiId] = item;
 
+                // 🌟 LOG LƯỢT NGHE NGAY KHI AUDIO THỰC SỰ BẮT ĐẦU PHÁT
+                _ = LogAudioListenAsync(item.PoiId, item.ClientId);
+
                 _ = OnAudioStart?.Invoke(item.RequestId, poiId);
             }
 
@@ -165,6 +175,29 @@ namespace VinhKhanhFood.API.Services
                     QueuedCount = queuedCount,
                     TotalWaiting = queuedCount + (playing != null ? 1 : 0)
                 };
+            }
+        }
+
+        private async Task LogAudioListenAsync(int poiId, string clientId)
+        {
+            try
+            {
+                using var scope = _scopeFactory.CreateScope();
+                var context = scope.ServiceProvider.GetRequiredService<VinhKhanhFood.API.Data.AppDbContext>();
+                
+                var log = new VinhKhanhFood.API.Models.AudioListenLog
+                {
+                    PoiId = poiId,
+                    VisitorId = clientId,
+                    ListenedAtUtc = DateTime.UtcNow
+                };
+                
+                context.AudioListenLogs.Add(log);
+                await context.SaveChangesAsync();
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"Lỗi khi ghi nhận lượt nghe: {ex.Message}");
             }
         }
     }

@@ -1,4 +1,4 @@
-﻿using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc;
 using Newtonsoft.Json;
 using System.Diagnostics;
 using VinhKhanhFood.Admin.Models;
@@ -16,7 +16,7 @@ namespace VinhKhanhFood.Admin.Controllers
             public int Count { get; set; }
         }
 
-        private const string ApiBaseUrl = "http://localhost:5020";
+        private const string ApiBaseUrl = "http://192.168.1.6:5020";
 
         public HomeController(ILogger<HomeController> logger)
         {
@@ -143,6 +143,26 @@ namespace VinhKhanhFood.Admin.Controllers
                 _logger.LogError($"Lỗi GetVisitorMonitorData: {ex.Message}");
                 return Json(new { count = 0, data = new List<object>(), error = ex.Message });
             }
+        }
+
+        //Lấy dữ liệu về Admin
+        public async Task<IActionResult> GetAudioAnalytics(int days = 7)
+        {
+            try
+            {
+                var topRes = await _client.GetAsync($"{ApiBaseUrl}/api/AudioQueue/stats/top-listens?days={days}");
+                var trendRes = await _client.GetAsync($"{ApiBaseUrl}/api/AudioQueue/stats/daily-trend?days={days}");
+
+                if (topRes.IsSuccessStatusCode && trendRes.IsSuccessStatusCode)
+                {
+                    var topData = JsonConvert.DeserializeObject<dynamic>(await topRes.Content.ReadAsStringAsync());
+                    var trendData = JsonConvert.DeserializeObject<dynamic>(await trendRes.Content.ReadAsStringAsync());
+
+                    return Json(new { top = topData, trend = trendData });
+                }
+            }
+            catch { }
+            return BadRequest();
         }
     }
 }

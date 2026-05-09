@@ -13,7 +13,10 @@
 
     <!-- Google Fonts -->
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&family=Manrope:wght@400;600;800&display=swap" rel="stylesheet">
-
+    
+    <!-- Vẽ biểu đồ lên giao diện -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    
     <style>
         body {
             font-family: 'Manrope', 'Inter', sans-serif;
@@ -227,7 +230,7 @@
         async function handleGenerateAppQR() {
             const token = crypto.randomUUID();
             try {
-                const res = await fetch('http://192.168.31.26:5020/api/QrManagement', {
+                const res = await fetch('http://192.168.1.6:5020/api/QrManagement', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ token: token })
@@ -240,7 +243,7 @@
                     const container = document.getElementById('qrcodeDisplay');
                     container.innerHTML = '';
                     new QRCode(container, {
-                        text: `http://192.168.31.26:5020/qr/launch?token=${token}`,
+                        text: `http://192.168.1.6:5020/qr/launch?token=${token}`,
                         width: 220,
                         height: 220,
                         colorDark: '#064E3B'

@@ -1,4 +1,6 @@
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
+using VinhKhanhFood.API.Data;
 using VinhKhanhFood.API.Services;
 
 namespace VinhKhanhFood.API.Controllers
@@ -8,10 +10,12 @@ namespace VinhKhanhFood.API.Controllers
     public class AudioQueueController : ControllerBase
     {
         private readonly AudioQueueService _audioQueueService;
+        private readonly AppDbContext _context;
 
-        public AudioQueueController(AudioQueueService audioQueueService)
+        public AudioQueueController(AudioQueueService audioQueueService, AppDbContext context)
         {
             _audioQueueService = audioQueueService;
+            _context = context;
         }
 
         [HttpPost("play-with-queue")]
@@ -58,6 +62,63 @@ namespace VinhKhanhFood.API.Controllers
         {
             public string RequestId { get; set; } = string.Empty;
             public int PoiId { get; set; }
+        }
+
+        // Thêm API lấy thống kê
+        [HttpGet("stats/top-listens")]
+        public async Task<IActionResult> GetTopListens([FromQuery] int days = 0)
+        {
+            var query = _context.AudioListenLogs.AsQueryable();
+            if (days > 0)
+            {
+                var startDate = DateTime.UtcNow.Date.AddDays(-days);
+                query = query.Where(l => l.ListenedAtUtc >= startDate);
+            }
+
+            // Lấy top 5 POI được nghe nhiều nhất, kèm theo tên quán
+            var stats = await query
+                .GroupBy(l => l.PoiId)
+                .Select(g => new {
+                    PoiId = g.Key,
+                    ListenCount = g.Count(),
+                    // Join lấy tên quán từ bảng FoodLocations
+                    PoiName = _context.FoodLocations
+                                .Where(f => f.Id == g.Key)
+                                .Select(f => f.Name)
+                                .FirstOrDefault() ?? "Unknown"
+                })
+                .OrderByDescending(x => x.ListenCount)
+                .Take(5)
+                .ToListAsync();
+
+            return Ok(stats);
+        }
+
+        [HttpGet("stats/daily-trend")]
+        public async Task<IActionResult> GetDailyTrend([FromQuery] int days = 7)
+        {
+            var logsQuery = _context.AudioListenLogs.AsQueryable();
+            
+            if (days > 0)
+            {
+                var startDate = DateTime.UtcNow.Date.AddDays(-days);
+                logsQuery = logsQuery.Where(l => l.ListenedAtUtc >= startDate);
+            }
+
+            var logs = await logsQuery
+                .Select(l => l.ListenedAtUtc)
+                .ToListAsync();
+
+            var trend = logs
+                .GroupBy(d => d.Date)
+                .Select(g => new {
+                    Date = g.Key.ToString("dd/MM"),
+                    Count = g.Count()
+                })
+                .OrderBy(x => x.Date)
+                .ToList();
+
+            return Ok(trend);
         }
     }
 }

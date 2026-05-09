@@ -1,4 +1,4 @@
-﻿@model IEnumerable<VinhKhanhFood.Admin.Models.FoodLocation>
+@model IEnumerable<VinhKhanhFood.Admin.Models.FoodLocation>
 @{
     ViewData["Title"] = "Dashboard Overview";
 
@@ -173,6 +173,32 @@
     </div>
 </div>
 
+<!-- Vẽ biểu đồ lên giao diện -->
+<div class="flex justify-between items-center mt-8 mb-4">
+    <h2 class="text-xl font-bold text-slate-900">Audio Analytics</h2>
+    <div class="flex items-center gap-2 bg-white px-4 py-2 rounded-xl border border-gray-100 shadow-sm">
+        <i data-lucide="calendar" class="w-4 h-4 text-gray-400"></i>
+        <select id="timeFilter" onchange="loadCharts()" class="bg-transparent border-none text-sm font-semibold text-slate-700 focus:ring-0 cursor-pointer outline-none">
+            <option value="7">Last 7 Days</option>
+            <option value="30">Last 30 Days</option>
+            <option value="90">Last 90 Days</option>
+            <option value="0">All Time</option>
+        </select>
+    </div>
+</div>
+
+<div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+    <div class="bg-white p-6 rounded-3xl border border-slate-100 shadow-sm">
+        <h3 class="text-lg font-bold text-slate-800 mb-4">Top địa điểm được nghe nhiều nhất</h3>
+        <canvas id="topPoisChart" height="200"></canvas>
+    </div>
+
+    <div class="bg-white p-6 rounded-3xl border border-slate-100 shadow-sm">
+        <h3 class="text-lg font-bold text-slate-800 mb-4">Lượt khách nghe theo ngày</h3>
+        <canvas id="dailyTrendChart" height="200"></canvas>
+    </div>
+</div>
+
 @section Scripts {
     <script>
         async function refreshActiveDevicesCount() {
@@ -201,6 +227,49 @@
             refreshActiveDevicesCount();
             setInterval(refreshActiveDevicesCount, 2000);
         });
+        
+        let topChartInstance = null;
+        let trendChartInstance = null;
+
+        async function loadCharts() {
+            const filterValue = document.getElementById('timeFilter').value;
+            const response = await fetch(`/Home/GetAudioAnalytics?days=${filterValue}`);
+            const data = await response.json();
+
+            if (topChartInstance) topChartInstance.destroy();
+            if (trendChartInstance) trendChartInstance.destroy();
+
+            // Vẽ biểu đồ Cột (Top POIs)
+            topChartInstance = new Chart(document.getElementById('topPoisChart'), {
+                type: 'bar',
+                data: {
+                    labels: data.top.map(x => x.poiName),
+                    datasets: [{
+                        label: 'Lượt nghe',
+                        data: data.top.map(x => x.listenCount),
+                        backgroundColor: '#3b82f6',
+                        borderRadius: 8
+                    }]
+                }
+            });
+
+            // Vẽ biểu đồ Đường (Daily Trend)
+            trendChartInstance = new Chart(document.getElementById('dailyTrendChart'), {
+                type: 'line',
+                data: {
+                    labels: data.trend.map(x => x.date),
+                    datasets: [{
+                        label: 'Tổng lượt nghe',
+                        data: data.trend.map(x => x.count),
+                        borderColor: '#10b981',
+                        tension: 0.4,
+                        fill: true,
+                        backgroundColor: 'rgba(16, 185, 129, 0.1)'
+                    }]
+                }
+            });
+        }
+
+        document.addEventListener('DOMContentLoaded', loadCharts);
     </script>
 }
-
