@@ -7,11 +7,7 @@
         "Action": "Start"
       },
       {
-        "Path": "VinhKhanhFood.Admin\\VinhKhanhFood.Admin.csproj",
-        "Action": "Start"
-      },
-      {
-        "Path": "VinhKhanhFood.App\\VinhKhanhFood.App.csproj",
+        "Path": "VinhKhanhFood.LoadTests\\VinhKhanhFood.LoadTests.csproj",
         "Action": "Start"
       }
     ]
