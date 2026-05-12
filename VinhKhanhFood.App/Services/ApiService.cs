@@ -15,7 +15,7 @@ namespace VinhKhanhFood.App.Services
         // 10.0.2.2 địa chỉ để máy ảo Android nhìn thấy máy
         //private const string BaseUrl = "http://10.0.2.2:5020/api/Food";
         //khi dùng máy thật thì dùng địa chỉ IP của máy tính, ví dụ:
-        private const string BaseUrl = "http://192.168.1.6:5020/api/Food";
+        private const string BaseUrl = "http://192.168.1.4:5020/api/Food";
 
         public ApiService()
         {
@@ -51,7 +51,7 @@ namespace VinhKhanhFood.App.Services
                                 // máy ảo
                                 //loc.ImageUrl = $"http://10.0.2.2:5020/images/{loc.ImageUrl}";
                                 // máy thật
-                                loc.ImageUrl = $"http://192.168.1.6:5020/images/{loc.ImageUrl}";
+                                loc.ImageUrl = $"http://192.168.1.4:5020/images/{loc.ImageUrl}";
 
                                 System.Diagnostics.Debug.WriteLine($"    ImageUrl sau xử lý: {loc.ImageUrl}");
                             }

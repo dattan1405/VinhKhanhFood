@@ -1,10 +1,10 @@
-﻿var builder = WebApplication.CreateBuilder(args);
+var builder = WebApplication.CreateBuilder(args);
 
 // 1. Đăng k? HttpClient đ? Admin có th? g?i sang API
 builder.Services.AddHttpClient("MyAPI", client =>
 {
     // (nh?n trên tr?nh duy?t lúc ch?y Scalar)
-    client.BaseAddress = new Uri("http://192.168.1.6:5020/api/");
+    client.BaseAddress = new Uri("http://192.168.1.4:5020/api/");
 });
 
 // 2. Thêm Session đ? lưu tr?ng thái đăng nh?p (đ? bi?t ai là Admin, ai là Vendor)

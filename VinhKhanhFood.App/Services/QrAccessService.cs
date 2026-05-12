@@ -5,7 +5,7 @@ namespace VinhKhanhFood.App.Services
     public class QrAccessService
     {
         //máy thật
-        private const string ApiBaseUrl = "http://192.168.1.6:5020";
+        private const string ApiBaseUrl = "http://192.168.1.4:5020";
         //máy ảo
         //private const string ApiBaseUrl = "http://10.0.2.2:5020";
 

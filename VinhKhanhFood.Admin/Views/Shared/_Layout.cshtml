@@ -124,18 +124,6 @@
                 <!-- Right Section -->
                 <div class="flex items-center gap-3 ml-8">
 
-                    <!-- Language Toggle -->
-                    <div class="flex items-center bg-gray-50 rounded-xl p-1 border border-gray-200">
-                        <button class="language-btn active px-3 py-1.5 text-xs font-bold rounded-lg"
-                                onclick="setLanguage(this, 'VN')">
-                            VN
-                        </button>
-                        <button class="language-btn px-3 py-1.5 text-xs font-bold rounded-lg"
-                                onclick="setLanguage(this, 'EN')">
-                            EN
-                        </button>
-                    </div>
-
                     <div class="w-px h-6 bg-gray-200"></div>
 
                     <!-- Notification Bell -->
@@ -230,7 +218,7 @@
         async function handleGenerateAppQR() {
             const token = crypto.randomUUID();
             try {
-                const res = await fetch('http://192.168.1.6:5020/api/QrManagement', {
+                const res = await fetch('http://192.168.1.4:5020/api/QrManagement', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ token: token })
@@ -243,7 +231,7 @@
                     const container = document.getElementById('qrcodeDisplay');
                     container.innerHTML = '';
                     new QRCode(container, {
-                        text: `http://192.168.1.6:5020/qr/launch?token=${token}`,
+                        text: `http://192.168.1.4:5020/qr/launch?token=${token}`,
                         width: 220,
                         height: 220,
                         colorDark: '#064E3B'

@@ -9,7 +9,7 @@ namespace VinhKhanhFood.Admin.Controllers
     public class FoodLocationController : Controller
     {
         private readonly IHttpClientFactory _httpClientFactory;
-        private const string ApiBaseUrl = "http://192.168.1.6:5020";
+        private const string ApiBaseUrl = "http://192.168.1.4:5020";
         //private const string PublicBaseUrl = "http://localhost:7065";
 
         public FoodLocationController(IHttpClientFactory httpClientFactory)
@@ -20,7 +20,7 @@ namespace VinhKhanhFood.Admin.Controllers
         public async Task<IActionResult> Index()
         {
             var client = _httpClientFactory.CreateClient();
-            var response = await client.GetAsync("http://192.168.1.6:5020/api/Food/all");
+            var response = await client.GetAsync("http://192.168.1.4:5020/api/Food/all");
 
             List<FoodLocation> locations = new List<FoodLocation>();
             if (response.IsSuccessStatusCode)
@@ -54,7 +54,7 @@ namespace VinhKhanhFood.Admin.Controllers
                     content.Add(streamContent, "ImageFile", model.ImageFile.FileName);
                 }
 
-                var response = await client.PostAsync("http://192.168.1.6:5020/api/Food", content);
+                var response = await client.PostAsync("http://192.168.1.4:5020/api/Food", content);
 
                 if (response.IsSuccessStatusCode)
                 {
@@ -84,7 +84,7 @@ namespace VinhKhanhFood.Admin.Controllers
             try
             {
                 var client = _httpClientFactory.CreateClient();
-                var getRes = await client.GetAsync($"http://192.168.1.6:5020/api/Food/{id}");
+                var getRes = await client.GetAsync($"http://192.168.1.4:5020/api/Food/{id}");
                 if (!getRes.IsSuccessStatusCode) return BadRequest("Không tìm thấy quán");
 
                 var json = await getRes.Content.ReadAsStringAsync();
@@ -133,7 +133,7 @@ namespace VinhKhanhFood.Admin.Controllers
                     AddString(poi.Name_ZH, "Name_ZH");
                     AddString(poi.Description_ZH, "Description_ZH");
 
-                    var request = new HttpRequestMessage(HttpMethod.Put, $"http://192.168.1.6:5020/api/Food/{id}") { Content = content };
+                    var request = new HttpRequestMessage(HttpMethod.Put, $"http://192.168.1.4:5020/api/Food/{id}") { Content = content };
                     var putRes = await client.SendAsync(request);
                     var respBody = await putRes.Content.ReadAsStringAsync();
 
@@ -235,7 +235,7 @@ namespace VinhKhanhFood.Admin.Controllers
                     }
 
                     // Use PUT with HttpRequestMessage to send multipart (API must accept)
-                    var request = new HttpRequestMessage(HttpMethod.Put, $"http://192.168.1.6:5020/api/Food/{id}") { Content = content };
+                    var request = new HttpRequestMessage(HttpMethod.Put, $"http://192.168.1.4:5020/api/Food/{id}") { Content = content };
                     var putRes = await client.SendAsync(request);
                     var respBody = await putRes.Content.ReadAsStringAsync();
 
@@ -258,7 +258,7 @@ namespace VinhKhanhFood.Admin.Controllers
             try
             {
                 var client = _httpClientFactory.CreateClient();
-                var deleteRes = await client.DeleteAsync($"http://192.168.1.6:5020/api/Food/{id}");
+                var deleteRes = await client.DeleteAsync($"http://192.168.1.4:5020/api/Food/{id}");
 
                 if (deleteRes.IsSuccessStatusCode)
                 {
@@ -288,7 +288,7 @@ namespace VinhKhanhFood.Admin.Controllers
                 var content = new StringContent($"\"{newStatus}\"", Encoding.UTF8, "application/json");
 
                 // Gọi Endpoint PATCH /api/Food/{id}/status được expose trên server API
-                var patchRes = await client.PatchAsync($"http://192.168.1.6:5020/api/Food/{id}/status", content);
+                var patchRes = await client.PatchAsync($"http://192.168.1.4:5020/api/Food/{id}/status", content);
 
                 if (patchRes.IsSuccessStatusCode)
                 {

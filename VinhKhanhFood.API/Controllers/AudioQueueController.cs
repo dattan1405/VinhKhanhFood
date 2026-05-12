@@ -75,19 +75,23 @@ namespace VinhKhanhFood.API.Controllers
                 query = query.Where(l => l.ListenedAtUtc >= startDate);
             }
 
-            // Lấy top 5 POI được nghe nhiều nhất, kèm theo tên quán
+            // Lấy top 5 POI được nghe nhiều nhất, chỉ tính POI còn tồn tại trong CSDL
             var stats = await query
                 .GroupBy(l => l.PoiId)
                 .Select(g => new {
                     PoiId = g.Key,
-                    // Nếu muốn nhân đôi lượt nghe thì *2 cuối dòng {g.Count() * 2,}
-                    ListenCount = g.Count(),
-                    // Join lấy tên quán từ bảng FoodLocations
-                    PoiName = _context.FoodLocations
-                                .Where(f => f.Id == g.Key)
-                                .Select(f => f.Name)
-                                .FirstOrDefault() ?? "Unknown"
+                    ListenCount = g.Count()
                 })
+                .Join(
+                    _context.FoodLocations,
+                    log => log.PoiId,
+                    food => food.Id,
+                    (log, food) => new {
+                        log.PoiId,
+                        log.ListenCount,
+                        PoiName = food.Name
+                    }
+                )
                 .OrderByDescending(x => x.ListenCount)
                 .Take(5)
                 .ToListAsync();
