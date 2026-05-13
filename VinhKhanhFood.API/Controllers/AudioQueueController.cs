@@ -80,7 +80,8 @@ namespace VinhKhanhFood.API.Controllers
                 .GroupBy(l => l.PoiId)
                 .Select(g => new {
                     PoiId = g.Key,
-                    ListenCount = g.Count()
+                    
+                    ListenCount = g.Count() // x2
                 })
                 .Join(
                     _context.FoodLocations,

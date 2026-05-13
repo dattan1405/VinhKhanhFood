@@ -4,16 +4,20 @@ using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.AspNetCore.SignalR;
+using VinhKhanhFood.API.Hubs;
 
 namespace VinhKhanhFood.API.Services
 {
     public class AudioQueueService
     {
         private readonly IServiceScopeFactory _scopeFactory;
+        private readonly IHubContext<AudioQueueHub> _hubContext;
 
-        public AudioQueueService(IServiceScopeFactory scopeFactory)
+        public AudioQueueService(IServiceScopeFactory scopeFactory, IHubContext<AudioQueueHub> hubContext)
         {
             _scopeFactory = scopeFactory;
+            _hubContext = hubContext;
         }
         private class AudioQueueItem
         {
@@ -30,10 +34,7 @@ namespace VinhKhanhFood.API.Services
         private readonly Dictionary<int, AudioQueueItem> _currentlyPlaying = new();
         private readonly object _lockObj = new object();
 
-        // Event để notify clients qua SignalR
-        public event Func<string, int, int, Task>? OnQueuePositionChanged; // (requestId, poiId, position)
-        public event Func<string, int, Task>? OnAudioStart; // (requestId, poiId)
-        public event Func<string, int, Task>? OnAudioFinish; // (requestId, poiId)
+        // SignalR context is now injected directly
 
         public async Task<AudioQueueResponse> EnqueueAudioAsync(int poiId, string clientId, string audioText)
         {
@@ -68,7 +69,13 @@ namespace VinhKhanhFood.API.Services
 
                 // Nếu không thì queue
                 int position = _poiQueues[poiId].Count;
-                _ = OnQueuePositionChanged?.Invoke(item.RequestId, poiId, position);
+                _ = _hubContext.Clients.Group($"poi-{poiId}").SendAsync("QueuePositionChanged", new
+                {
+                    RequestId = item.RequestId,
+                    PoiId = poiId,
+                    Position = position,
+                    Timestamp = DateTime.UtcNow
+                });
 
                 return new AudioQueueResponse
                 {
@@ -98,7 +105,12 @@ namespace VinhKhanhFood.API.Services
                 // 🌟 LOG LƯỢT NGHE NGAY KHI AUDIO THỰC SỰ BẮT ĐẦU PHÁT
                 _ = LogAudioListenAsync(item.PoiId, item.ClientId);
 
-                _ = OnAudioStart?.Invoke(item.RequestId, poiId);
+                _ = _hubContext.Clients.Group($"poi-{poiId}").SendAsync("AudioStart", new
+                {
+                    RequestId = item.RequestId,
+                    PoiId = poiId,
+                    Timestamp = DateTime.UtcNow
+                });
             }
 
             if (item == null)
@@ -122,7 +134,25 @@ namespace VinhKhanhFood.API.Services
                 if (_currentlyPlaying.ContainsKey(poiId) && _currentlyPlaying[poiId].RequestId == item.RequestId)
                 {
                     _currentlyPlaying.Remove(poiId);
-                    _ = OnAudioFinish?.Invoke(item.RequestId, poiId);
+                    _ = _hubContext.Clients.Group($"poi-{poiId}").SendAsync("AudioFinish", new
+                    {
+                        RequestId = item.RequestId,
+                        PoiId = poiId,
+                        Timestamp = DateTime.UtcNow
+                    });
+
+                    // Cập nhật vị trí cho những người đang đợi
+                    var i = 1;
+                    foreach (var queuedItem in _poiQueues[poiId])
+                    {
+                        _ = _hubContext.Clients.Group($"poi-{poiId}").SendAsync("QueuePositionChanged", new
+                        {
+                            RequestId = queuedItem.RequestId,
+                            PoiId = poiId,
+                            Position = i++,
+                            Timestamp = DateTime.UtcNow
+                        });
+                    }
 
                     // Play cái tiếp theo nếu có
                     if (_poiQueues[poiId].Count > 0)

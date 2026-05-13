@@ -6,7 +6,7 @@
     var recentLocations = locations.Take(5);
 
     // có thể nhân đôi hiển thị số poi: { .Count() * 2;}
-    var total = locations.Count();
+    var total = locations.Count() ;
     var translated = locations.Count(x =>
         !string.IsNullOrEmpty(x.Name_EN) ||
         !string.IsNullOrEmpty(x.Description_EN) ||
@@ -16,7 +16,7 @@
         !string.IsNullOrEmpty(x.Description_JA) ||
         !string.IsNullOrEmpty(x.Name_ZH) ||
         !string.IsNullOrEmpty(x.Description_ZH)
-    );
+    ); // hoặc nhân số poi đã được dịch ) * 2;
     var translationRate = total > 0 ? (translated * 100 / total) : 0;
     var onlineCount = locations.Count(x => x.Status?.ToLower() == "online"); // có thể nhân đôi poi đang online: {== "online") * 2;}
     var activeDeviceCount = ViewBag.ActiveDeviceCount is int value ? value : 0;
